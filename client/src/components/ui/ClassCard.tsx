@@ -28,7 +28,7 @@ export function ClassCard({ id, name, age, description, color, Icon, onClick }: 
     >
       <div className={cn("w-12 h-12 rounded-full flex items-center justify-center mb-4", color)}>
         {Icon && typeof Icon === 'function' ? (
-          <Icon className="w-6 h-6" />
+        <Icon className="w-6 h-6" />
         ) : (
           <span className="text-2xl">📚</span>
         )}

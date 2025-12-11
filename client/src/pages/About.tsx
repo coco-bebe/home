@@ -51,9 +51,9 @@ export default function About() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-gray-400 bg-gray-50">
+                  <div className="absolute inset-0 flex items-center justify-center text-gray-400 bg-gray-50">
                        <span className="text-center">원장님 사진<br/>(업로드해주세요)</span>
-                    </div>
+                  </div>
                   )}
                </div>
                <div className="w-full md:w-2/3">
@@ -84,7 +84,7 @@ export default function About() {
           </TabsContent>
 
           <TabsContent value="facility" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                {(facilityImages.length > 0 ? facilityImages : [ { title: "시설 사진", url: "", desc: "시설 사진을 등록해주세요." }]).map((img, i) => (
                   <div key={`${img.title}-${i}`} className="aspect-video bg-gray-100 rounded-2xl overflow-hidden relative group">
                      {img.url ? (
@@ -94,17 +94,17 @@ export default function About() {
                          className="w-full h-full object-cover"
                        />
                      ) : (
-                       <div className="absolute inset-0 flex items-center justify-center text-gray-400 bg-gray-50">
+                      <div className="absolute inset-0 flex items-center justify-center text-gray-400 bg-gray-50">
                           <span className="font-medium">시설 사진 등록 필요</span>
-                       </div>
+                      </div>
                      )}
-                     <div className="absolute bottom-0 left-0 w-full bg-black/50 text-white p-4 translate-y-full group-hover:translate-y-0 transition-transform">
+                      <div className="absolute bottom-0 left-0 w-full bg-black/50 text-white p-4 translate-y-full group-hover:translate-y-0 transition-transform">
                         <h4 className="font-bold">{img.title}</h4>
                         <p className="text-sm opacity-90">{img.desc || "아이들을 위한 쾌적한 공간입니다."}</p>
-                     </div>
-                  </div>
-               ))}
-            </div>
+                      </div>
+                   </div>
+                ))}
+             </div>
           </TabsContent>
 
           <TabsContent value="history" className="animate-in fade-in slide-in-from-bottom-4 duration-500">

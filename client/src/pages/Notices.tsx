@@ -40,54 +40,54 @@ export default function Notices() {
                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                   {notices.length > 0 ? (
                     <>
-                      <div className="hidden md:grid grid-cols-12 bg-gray-50 p-4 text-sm font-bold text-gray-500 border-b border-gray-200">
-                         <div className="col-span-1 text-center">번호</div>
-                         <div className="col-span-2 text-center">분류</div>
-                         <div className="col-span-6">제목</div>
-                         <div className="col-span-2 text-center">작성자</div>
-                         <div className="col-span-1 text-center">날짜</div>
-                      </div>
+                  <div className="hidden md:grid grid-cols-12 bg-gray-50 p-4 text-sm font-bold text-gray-500 border-b border-gray-200">
+                     <div className="col-span-1 text-center">번호</div>
+                     <div className="col-span-2 text-center">분류</div>
+                     <div className="col-span-6">제목</div>
+                     <div className="col-span-2 text-center">작성자</div>
+                     <div className="col-span-1 text-center">날짜</div>
+                  </div>
                       {notices.map((notice, idx) => (
-                         <div key={notice.id} className="grid grid-cols-1 md:grid-cols-12 p-4 border-b border-gray-100 items-center hover:bg-gray-50 transition-colors cursor-pointer group">
+                     <div key={notice.id} className="grid grid-cols-1 md:grid-cols-12 p-4 border-b border-gray-100 items-center hover:bg-gray-50 transition-colors cursor-pointer group">
                             <div className="hidden md:block col-span-1 text-center text-gray-400">{idx + 1}</div>
-                            <div className="col-span-2 text-center mb-2 md:mb-0">
-                               <span className={cn(
-                                  "inline-block px-2 py-1 rounded text-xs font-bold",
+                        <div className="col-span-2 text-center mb-2 md:mb-0">
+                           <span className={cn(
+                              "inline-block px-2 py-1 rounded text-xs font-bold",
                                   "bg-blue-100 text-blue-600"
-                               )}>
+                           )}>
                                   공지
-                               </span>
-                            </div>
-                            <div className="col-span-12 md:col-span-6 font-medium text-gray-700 group-hover:text-orange-600 transition-colors mb-2 md:mb-0">
-                               {notice.title}
-                            </div>
-                            <div className="col-span-6 md:col-span-2 text-sm text-gray-500 md:text-center">{notice.author}</div>
-                            <div className="col-span-6 md:col-span-1 text-sm text-gray-400 text-right md:text-center">{notice.date}</div>
-                         </div>
-                      ))}
+                           </span>
+                        </div>
+                        <div className="col-span-12 md:col-span-6 font-medium text-gray-700 group-hover:text-orange-600 transition-colors mb-2 md:mb-0">
+                           {notice.title}
+                        </div>
+                        <div className="col-span-6 md:col-span-2 text-sm text-gray-500 md:text-center">{notice.author}</div>
+                        <div className="col-span-6 md:col-span-1 text-sm text-gray-400 text-right md:text-center">{notice.date}</div>
+                     </div>
+                  ))}
                     </>
                   ) : (
                     <div className="p-12 text-center text-gray-400">
                       등록된 공지사항이 없습니다.
-                    </div>
+               </div>
                   )}
                </div>
             </TabsContent>
 
             <TabsContent value="events">
                {events.length > 0 ? (
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {events.map((event) => {
                       const eventDate = new Date(event.date);
                       const month = eventDate.toLocaleDateString('ko-KR', { month: 'long' });
                       return (
                         <div key={event.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-4 hover:shadow-md transition-all">
-                          <div className="w-16 h-16 bg-orange-100 rounded-2xl flex flex-col items-center justify-center shrink-0 text-orange-600">
-                             <span className="text-xs font-bold">MONTH</span>
+                        <div className="w-16 h-16 bg-orange-100 rounded-2xl flex flex-col items-center justify-center shrink-0 text-orange-600">
+                           <span className="text-xs font-bold">MONTH</span>
                              <span className="text-xl font-bold font-display">{month}</span>
-                          </div>
+                        </div>
                           <div className="flex-1">
-                             <h3 className="font-bold text-lg text-gray-800 mb-2">{event.title}</h3>
+                           <h3 className="font-bold text-lg text-gray-800 mb-2">{event.title}</h3>
                              <p className="text-sm text-gray-500 mb-2 line-clamp-2">{event.content}</p>
                              <p className="text-xs text-gray-400">{event.date}</p>
                              {event.classId && (
@@ -99,11 +99,11 @@ export default function Notices() {
                         </div>
                       );
                     })}
-                 </div>
+                     </div>
                ) : (
                  <div className="p-12 text-center text-gray-400 bg-white rounded-2xl shadow-sm border border-gray-100">
                    등록된 행사 안내가 없습니다.
-                 </div>
+               </div>
                )}
             </TabsContent>
          </Tabs>

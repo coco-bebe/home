@@ -181,7 +181,7 @@ export default function Admin() {
       const finalImageUrl = newPostImageUrl && newPostImageUrl.includes('drive.google.com')
         ? convertGoogleDriveLink(newPostImageUrl)
         : newPostImageUrl;
-      
+
       const postData = {
           title: newPostTitle,
           content: newPostContent,
@@ -497,9 +497,9 @@ export default function Admin() {
                                 >
                                   비번변경
                                 </Button>
-                                <Button size="icon" variant="ghost" onClick={() => handleDeleteUser(user.id)} className="text-red-500 hover:text-red-600 hover:bg-red-50">
-                                   <Trash2 className="w-4 h-4" />
-                                </Button>
+                               <Button size="icon" variant="ghost" onClick={() => handleDeleteUser(user.id)} className="text-red-500 hover:text-red-600 hover:bg-red-50">
+                                  <Trash2 className="w-4 h-4" />
+                               </Button>
                               </div>
                             </TableCell>
                          </TableRow>
@@ -887,7 +887,7 @@ export default function Admin() {
                                     setNewPostImageUrl(url);
                                   }} 
                                />
-                               {newPostImageUrl && (
+                                  {newPostImageUrl && (
                                   <div className="mt-3">
                                      <p className="text-xs font-medium text-gray-600 mb-2">미리보기</p>
                                      <div className="relative w-full aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
@@ -897,8 +897,8 @@ export default function Admin() {
                                            className="w-full h-full object-contain"
                                         />
                                      </div>
-                                  </div>
-                               )}
+                                     </div>
+                                  )}
                             </div>
                          </div>
                          <DialogFooter>
@@ -982,7 +982,7 @@ export default function Admin() {
                          </DialogHeader>
                          <div className="space-y-4 py-4">
                             <div>
-                               <Input placeholder="제목 (예: 가을소풍)" value={newPhotoTitle} onChange={e => setNewPhotoTitle(e.target.value)} />
+                            <Input placeholder="제목 (예: 가을소풍)" value={newPhotoTitle} onChange={e => setNewPhotoTitle(e.target.value)} />
                             </div>
                             <div>
                                <Input 

@@ -237,17 +237,17 @@ export default function ParentProfile() {
                            render={({ field }) => {
                              const classLabel = CLASSES.find((c) => c.id === field.value)?.name || "자동 연동";
                              return (
-                               <FormItem>
+                              <FormItem>
                                  <FormLabel>자녀 반 (자동 연동)</FormLabel>
-                                 <FormControl>
+                                    <FormControl>
                                    <Input
                                      value={classLabel}
                                      readOnly
                                      className="bg-gray-100 text-gray-500"
                                    />
-                                 </FormControl>
+                                    </FormControl>
                                  <FormMessage />
-                               </FormItem>
+                              </FormItem>
                              );
                            }}
                         />

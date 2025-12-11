@@ -116,16 +116,16 @@ export default function Home() {
                 }
               }
               return (
-                <Link key={cls.id} href={`/classes/${cls.id}`} className="block h-full">
-                  <ClassCard
-                    id={cls.id}
-                    name={cls.name}
-                    age={cls.age}
-                    description={cls.description}
-                    color={cls.color}
+              <Link key={cls.id} href={`/classes/${cls.id}`} className="block h-full">
+                <ClassCard
+                  id={cls.id}
+                  name={cls.name}
+                  age={cls.age}
+                  description={cls.description}
+                  color={cls.color}
                     Icon={Icon}
-                  />
-                </Link>
+                />
+              </Link>
               );
             })}
           </div>
@@ -182,16 +182,16 @@ export default function Home() {
               <div className="grid grid-cols-2 gap-4">
                 {recentAlbumPhotos.length > 0 ? (
                   recentAlbumPhotos.map((img) => (
-                    <div key={img.id} className="aspect-square rounded-xl overflow-hidden bg-gray-100 relative group cursor-pointer">
+                  <div key={img.id} className="aspect-square rounded-xl overflow-hidden bg-gray-100 relative group cursor-pointer">
                       <GoogleDriveImage 
-                        src={img.url} 
-                        alt={img.title} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                        <span className="text-white text-sm font-bold">{img.title}</span>
-                      </div>
+                      src={img.url} 
+                      alt={img.title} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                      <span className="text-white text-sm font-bold">{img.title}</span>
                     </div>
+                  </div>
                   ))
                 ) : (
                   <div className="col-span-2 text-center py-12 text-gray-400">

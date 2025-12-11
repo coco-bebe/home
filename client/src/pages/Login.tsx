@@ -138,7 +138,7 @@ export default function Login() {
                          <p className="text-[0.8rem] font-medium text-destructive">
                            {registerForm.formState.errors.name.message}
                          </p>
-                       )}
+                        )}
                      </div>
                      <div className="grid grid-cols-2 gap-4">
                         <FormField

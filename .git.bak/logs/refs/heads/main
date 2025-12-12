@@ -1,4 +1,0 @@
-0000000000000000000000000000000000000000 40152fd27b5d53a83eb85e017abf3a52a9a80659 shinhanedubox <50707987-shinhanedubox@users.noreply.replit.com> 1764823864 +0000	commit (initial): Initial commit
-40152fd27b5d53a83eb85e017abf3a52a9a80659 7b7fc50e808838a04cf1b31f672310729d0d9afe shinhanedubox <50707987-shinhanedubox@users.noreply.replit.com> 1764824496 +0000	commit: Update website to use Kakao and Naver maps and fix navigation links
-7b7fc50e808838a04cf1b31f672310729d0d9afe bc9ab2816da0611ca495a603bc17023351a571c5 shinhanedubox <50707987-shinhanedubox@users.noreply.replit.com> 1764824947 +0000	commit: Update map to show only Naver Maps and restrict parent class view
-bc9ab2816da0611ca495a603bc17023351a571c5 659fd1e8ea04e41ec7c961ca77816d0ef3dd4ef3 shinhanedubox <50707987-shinhanedubox@users.noreply.replit.com> 1764825985 +0000	commit: Add functionality to match children with parents and integrate map display

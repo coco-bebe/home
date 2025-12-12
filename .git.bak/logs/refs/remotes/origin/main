@@ -1,2 +1,0 @@
-0000000000000000000000000000000000000000 a0ba86f32fb87294633e27466392cc0f7b3b419f coco-bebe <ch.youngsam@gmail.com> 1765442037 +0900	fetch --progress --prune --recurse-submodules=on-demand origin: storing head
-a0ba86f32fb87294633e27466392cc0f7b3b419f f5138b5db48108c1d6b58a849b443c8495851499 coco-bebe <ch.youngsam@gmail.com> 1765463519 +0900	fetch --progress --prune --recurse-submodules=on-demand origin: fast-forward

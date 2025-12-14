@@ -31,7 +31,7 @@ const registerSchema = z.object({
 });
 
 export default function Login() {
-  const { login, registerUser, matchChildWithParent, updateRegisteredChild } = useApp();
+  const { login, registerUser, matchChildWithParent, updateRegisteredChild, currentUser } = useApp();
   const [_, setLocation] = useLocation();
   const [isRegistering, setIsRegistering] = useState(false);
   
@@ -49,25 +49,32 @@ export default function Login() {
     const success = login(values.username, values.password);
     
     if (success) {
-      const userStore = localStorage.getItem('currentUser');
-      const user = userStore ? JSON.parse(userStore) : null;
-      
-      if (user?.role === 'admin') {
-         setLocation("/admin");
-      } else if (user?.role === 'teacher') {
-         toast({ title: "로그인 성공", description: "환영합니다, 선생님!" });
-         setLocation("/teacher");
-      } else {
-         toast({ title: "로그인 성공", description: "환영합니다!" });
-         if (user?.child?.classId) setLocation(`/classes/${user.child.classId}`);
-         else setLocation("/");
-      }
+      // login 함수가 성공하면 currentUser가 설정되므로, 
+      // 약간의 지연 후 localStorage에서 최신 사용자 정보를 가져옴
+      setTimeout(() => {
+        const userStore = localStorage.getItem('currentUser');
+        const user = userStore ? JSON.parse(userStore) : null;
+        
+        if (user?.role === 'admin') {
+           setLocation("/admin");
+        } else if (user?.role === 'teacher') {
+           toast({ title: "로그인 성공", description: "환영합니다, 선생님!" });
+           setLocation("/teacher");
+        } else if (user?.role === 'nutritionist') {
+           toast({ title: "로그인 성공", description: "환영합니다, 영양사 선생님!" });
+           setLocation("/nutritionist");
+        } else {
+           toast({ title: "로그인 성공", description: "환영합니다!" });
+           if (user?.child?.classId) setLocation(`/classes/${user.child.classId}`);
+           else setLocation("/");
+        }
+      }, 50);
     } else {
       toast({ variant: "destructive", title: "로그인 실패", description: "아이디/비번을 확인하거나 승인 대기중입니다." });
     }
   }
 
-  function onRegister(values: z.infer<typeof registerSchema>) {
+  async function onRegister(values: z.infer<typeof registerSchema>) {
     const matchedChild = matchChildWithParent(values.childName, values.childBirthDate);
     
     if (!matchedChild) {
@@ -83,7 +90,7 @@ export default function Login() {
     const currentYear = new Date().getFullYear();
     const age = currentYear - birthYear;
 
-    registerUser({
+    await registerUser({
       username: values.username,
       password: values.password,
       name: values.name,

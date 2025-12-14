@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CLASSES as MOCK_CLASSES } from './mockData';
 
+// API base URL
+const API_BASE = import.meta.env.DEV ? 'http://localhost:5000/api' : '/api';
+
 // Class Interface
 export interface ClassData {
   id: string;
@@ -61,7 +64,7 @@ export interface User {
   username: string;
   password: string;
   name: string;
-  role: 'admin' | 'parent' | 'teacher';
+  role: 'admin' | 'parent' | 'teacher' | 'nutritionist';
   child?: ChildInfo; 
   phone?: string;
   classId?: string; // 선생님의 담당 반 ID
@@ -82,7 +85,7 @@ export interface Post {
   content: string;
   author: string;
   date: string;
-  type: 'notice' | 'event' | 'album' | 'board';
+  type: 'notice' | 'event' | 'album' | 'board' | 'menu';
   classId?: string; 
   parentId?: string; // 알림장의 경우 특정 학부모에게만 보이도록
   images?: string[];
@@ -90,23 +93,23 @@ export interface Post {
 
 interface AppContextType {
   siteSettings: SiteSettings;
-  updateSiteSettings: (settings: SiteSettings) => void;
+  updateSiteSettings: (settings: SiteSettings) => void | Promise<void>;
   currentUser: User | null;
   login: (username: string, password: string) => boolean;
   logout: () => void;
-  updateUserProfile: (user: Partial<User>) => void;
-  registerUser: (user: Omit<User, 'id' | 'approved'>) => void;
+  updateUserProfile: (user: Partial<User>) => void | Promise<void>;
+  registerUser: (user: Omit<User, 'id' | 'approved'>) => Promise<User>;
   users: User[];
   updateUserPassword: (userId: string, password: string) => void;
   updateUserStatus: (userId: string, approved: boolean) => void;
   deleteUser: (userId: string) => void;
   posts: Post[];
-  addPost: (post: Omit<Post, 'id' | 'date'>) => void;
-  updatePost: (id: number, post: Partial<Post>) => void;
-  deletePost: (postId: number) => void;
+  addPost: (post: Omit<Post, 'id' | 'date'>) => Promise<Post>;
+  updatePost: (id: number, post: Partial<Post>) => Promise<Post>;
+  deletePost: (postId: number) => Promise<void>;
   albumPhotos: AlbumPhoto[];
-  addAlbumPhoto: (photo: Omit<AlbumPhoto, 'id' | 'date'>) => void;
-  deleteAlbumPhoto: (photoId: number) => void;
+  addAlbumPhoto: (photo: Omit<AlbumPhoto, 'id' | 'date'>) => Promise<AlbumPhoto>;
+  deleteAlbumPhoto: (photoId: number) => Promise<void>;
   registeredChildren: RegisteredChild[];
   addRegisteredChild: (child: Omit<RegisteredChild, 'id'>) => void;
   updateRegisteredChild: (id: string, child: Partial<RegisteredChild>) => void;
@@ -115,11 +118,11 @@ interface AppContextType {
   classes: ClassData[];
   addClass: (cls: Omit<ClassData, 'id'>) => void;
   updateClass: (id: string, cls: Partial<ClassData>) => void;
-  deleteClass: (id: string) => void;
+  deleteClass: (id: string) => Promise<void>;
   teachers: Teacher[];
   addTeacher: (teacher: Omit<Teacher, 'id'>) => void;
   updateTeacher: (id: string, teacher: Partial<Teacher>) => void;
-  deleteTeacher: (id: string) => void;
+  deleteTeacher: (id: string) => Promise<void>;
 }
 
 const INITIAL_SETTINGS: SiteSettings = {
@@ -161,12 +164,13 @@ const MOCK_USERS: User[] = [
     id: '4', username: 'newparent', password: '123', name: '박신입', role: 'parent', approved: false, phone: '010-5555-6666',
     child: { name: '박하늘', age: 3, classId: 'faith2', birthDate: '2021-11-08' }
   },
+  { id: '5', username: 'nutritionist', password: '123', name: '영양사', role: 'nutritionist', approved: true, phone: '010-7777-8888' },
 ];
 
 const MOCK_POSTS: Post[] = [
   { id: 1, title: "[공지] 12월 겨울방학 안내", content: "겨울방학 기간은 12월 25일부터 1월 5일까지입니다. 가정통신문을 참고해주세요.", author: "원장님", date: "2024-12-01", type: "notice" },
   { id: 2, title: "[행사] 크리스마스 산타 잔치", content: "아이들이 기다리던 산타 잔치가 열립니다! 빨간 옷을 입혀 보내주세요.", author: "관리자", date: "2024-11-28", type: "event" },
-  { id: 3, title: "[식단] 12월 식단표 안내", content: "균형 잡힌 영양 식단표입니다. 알레르기가 있는 어린이는 미리 말씀해주세요.", author: "영양사", date: "2024-11-25", type: "notice" },
+  { id: 3, title: "12월 식단표", content: "균형 잡힌 영양 식단표입니다. 알레르기가 있는 어린이는 미리 말씀해주세요.", author: "영양사", date: "2024-12-01", type: "menu", images: ["https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&q=80"] },
   { id: 4, title: "우리 아이들 소풍 사진", content: "가을 소풍을 다녀왔습니다. 해맑은 아이들의 모습을 감상해보세요.", author: "김미소 선생님", date: "2024-11-20", type: "board", classId: "faith1", images: ["https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&q=80"] },
   { id: 5, title: "믿음1반 알림장", content: "오늘 민준이가 밥을 두 그릇이나 먹었어요. 낮잠도 푹 잤답니다.", author: "김미소 선생님", date: "2024-12-04", type: "board", classId: "faith1" },
 ];
@@ -193,45 +197,106 @@ const MOCK_TEACHERS: Teacher[] = [
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [siteSettings, setSiteSettings] = useState<SiteSettings>(() => {
-    const saved = localStorage.getItem('siteSettings');
-    return saved ? { ...INITIAL_SETTINGS, ...JSON.parse(saved) } : INITIAL_SETTINGS;
-  });
-
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>(INITIAL_SETTINGS);
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('currentUser');
     return saved ? JSON.parse(saved) : null;
   });
+  const [users, setUsers] = useState<User[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [albumPhotos, setAlbumPhotos] = useState<AlbumPhoto[]>([]);
+  const [registeredChildren, setRegisteredChildren] = useState<RegisteredChild[]>([]);
+  const [classes, setClasses] = useState<ClassData[]>(MOCK_CLASSES);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [users, setUsers] = useState<User[]>(() => {
-     const saved = localStorage.getItem('users');
-     return saved ? JSON.parse(saved) : MOCK_USERS;
-  });
+  // Load data from server on mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [postsRes, photosRes, usersRes, teachersRes, classesRes, childrenRes, settingsRes] = await Promise.all([
+          fetch(`${API_BASE}/posts`).catch(() => null),
+          fetch(`${API_BASE}/album-photos`).catch(() => null),
+          fetch(`${API_BASE}/users`).catch(() => null),
+          fetch(`${API_BASE}/teachers`).catch(() => null),
+          fetch(`${API_BASE}/classes`).catch(() => null),
+          fetch(`${API_BASE}/registered-children`).catch(() => null),
+          fetch(`${API_BASE}/site-settings`).catch(() => null),
+        ]);
 
-  const [posts, setPosts] = useState<Post[]>(() => {
-     const saved = localStorage.getItem('posts');
-     return saved ? JSON.parse(saved) : MOCK_POSTS;
-  });
+        if (postsRes?.ok) {
+          const postsData = await postsRes.json();
+          setPosts(postsData);
+        } else if (postsRes === null) {
+          // 서버가 실행되지 않은 경우에만 MOCK 데이터 사용
+          console.warn('서버에 연결할 수 없습니다. MOCK 데이터를 사용합니다.');
+          setPosts(MOCK_POSTS);
+        }
+        // 서버 응답이 실패한 경우 기존 상태 유지 (빈 배열)
 
-  const [albumPhotos, setAlbumPhotos] = useState<AlbumPhoto[]>(() => {
-      const saved = localStorage.getItem('albumPhotos');
-      return saved ? JSON.parse(saved) : MOCK_ALBUM_PHOTOS;
-  });
+        if (photosRes?.ok) {
+          const photosData = await photosRes.json();
+          setAlbumPhotos(photosData);
+        } else if (photosRes === null) {
+          console.warn('서버에 연결할 수 없습니다. MOCK 데이터를 사용합니다.');
+          setAlbumPhotos(MOCK_ALBUM_PHOTOS);
+        }
 
-  const [registeredChildren, setRegisteredChildren] = useState<RegisteredChild[]>(() => {
-      const saved = localStorage.getItem('registeredChildren');
-      return saved ? JSON.parse(saved) : MOCK_REGISTERED_CHILDREN;
-  });
+        if (usersRes?.ok) {
+          const usersData = await usersRes.json();
+          const hasAdmin = usersData.some((u: User) => u.role === 'admin');
+          setUsers(hasAdmin ? usersData : [MOCK_USERS[0], ...usersData]);
+        } else if (usersRes === null) {
+          console.warn('서버에 연결할 수 없습니다. MOCK 데이터를 사용합니다.');
+          setUsers(MOCK_USERS);
+        }
 
-  const [classes, setClasses] = useState<ClassData[]>(() => {
-      const saved = localStorage.getItem('classes');
-      return saved ? JSON.parse(saved) : MOCK_CLASSES;
-  });
+        if (teachersRes?.ok) {
+          const teachersData = await teachersRes.json();
+          setTeachers(teachersData);
+        } else if (teachersRes === null) {
+          console.warn('서버에 연결할 수 없습니다. MOCK 데이터를 사용합니다.');
+          setTeachers(MOCK_TEACHERS);
+        }
 
-  const [teachers, setTeachers] = useState<Teacher[]>(() => {
-      const saved = localStorage.getItem('teachers');
-      return saved ? JSON.parse(saved) : MOCK_TEACHERS;
-  });
+        if (classesRes?.ok) {
+          const classesData = await classesRes.json();
+          // 서버에서 빈 배열이 와도 그대로 사용 (MOCK으로 대체하지 않음)
+          setClasses(classesData);
+        } else if (classesRes === null) {
+          // 서버가 실행되지 않은 경우에만 MOCK 데이터 사용
+          console.warn('서버에 연결할 수 없습니다. MOCK 데이터를 사용합니다.');
+          setClasses(MOCK_CLASSES);
+        }
+        // 서버 응답이 실패한 경우 기존 상태 유지 (MOCK_CLASSES)
+
+        if (childrenRes?.ok) {
+          const childrenData = await childrenRes.json();
+          setRegisteredChildren(childrenData);
+        } else if (childrenRes === null) {
+          console.warn('서버에 연결할 수 없습니다. MOCK 데이터를 사용합니다.');
+          setRegisteredChildren(MOCK_REGISTERED_CHILDREN);
+        }
+
+        if (settingsRes?.ok) {
+          const settingsData = await settingsRes.json();
+          setSiteSettings({ ...INITIAL_SETTINGS, ...settingsData });
+        }
+      } catch (error) {
+        console.error('Failed to load data:', error);
+        // Fallback to mock data
+        setPosts(MOCK_POSTS);
+        setAlbumPhotos(MOCK_ALBUM_PHOTOS);
+        setUsers(MOCK_USERS);
+        setTeachers(MOCK_TEACHERS);
+        setRegisteredChildren(MOCK_REGISTERED_CHILDREN);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
 
   // Auto-link parent-child on mount and when data changes
   useEffect(() => {
@@ -255,23 +320,41 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [users, registeredChildren]);
 
-  // Persistence
-  useEffect(() => { localStorage.setItem('siteSettings', JSON.stringify(siteSettings)); }, [siteSettings]);
+  // Persist currentUser to localStorage (for login state)
   useEffect(() => { 
     if (currentUser) localStorage.setItem('currentUser', JSON.stringify(currentUser));
     else localStorage.removeItem('currentUser');
   }, [currentUser]);
-  useEffect(() => { localStorage.setItem('users', JSON.stringify(users)); }, [users]);
-  useEffect(() => { localStorage.setItem('posts', JSON.stringify(posts)); }, [posts]);
-  useEffect(() => { localStorage.setItem('albumPhotos', JSON.stringify(albumPhotos)); }, [albumPhotos]);
-  useEffect(() => { localStorage.setItem('registeredChildren', JSON.stringify(registeredChildren)); }, [registeredChildren]);
-  useEffect(() => { localStorage.setItem('classes', JSON.stringify(classes)); }, [classes]);
-  useEffect(() => { localStorage.setItem('teachers', JSON.stringify(teachers)); }, [teachers]);
 
-  const updateSiteSettings = (newSettings: SiteSettings) => setSiteSettings(newSettings);
+  const updateSiteSettings = async (newSettings: SiteSettings) => {
+    setSiteSettings(newSettings);
+    try {
+      await fetch(`${API_BASE}/site-settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newSettings),
+      });
+    } catch (error) {
+      console.error('Failed to update site settings:', error);
+    }
+  };
 
   const login = (username: string, password: string) => {
-    // 일반 사용자(학부모, 관리자) 로그인
+    // 관리자 계정 직접 체크 (항상 로그인 가능하도록)
+    if (username === 'admin' && password === '123') {
+      const adminUser: User = {
+        id: '1',
+        username: 'admin',
+        password: '123',
+        name: '관리자',
+        role: 'admin',
+        approved: true
+      };
+      setCurrentUser(adminUser);
+      return true;
+    }
+
+    // 일반 사용자(학부모, 관리자, 영양사) 로그인
     const user = users.find(u => u.username === username && u.password === password);
     if (user) {
       if (!user.approved && user.role !== 'admin') {
@@ -309,14 +392,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => setCurrentUser(null);
 
-  const updateUserPassword = (userId: string, password: string) => {
-    setUsers(prev => prev.map(u => u.id === userId ? { ...u, password } : u));
+  const updateUserPassword = async (userId: string, password: string) => {
+    const updatedUsers = users.map(u => u.id === userId ? { ...u, password } : u);
+    setUsers(updatedUsers);
     if (currentUser?.id === userId) {
-      setCurrentUser({ ...currentUser, password });
+      const updatedUser = { ...currentUser, password };
+      setCurrentUser(updatedUser);
+    }
+    try {
+      const user = users.find(u => u.id === userId);
+      if (user) {
+        await fetch(`${API_BASE}/users/${userId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...user, password }),
+        });
+      }
+    } catch (error) {
+      console.error('Failed to update user password:', error);
     }
   };
 
-  const updateUserProfile = (updates: Partial<User>) => {
+  const updateUserProfile = async (updates: Partial<User>) => {
     if (!currentUser) return;
     let updatedUser: User = { ...currentUser, ...updates };
 
@@ -337,13 +434,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
 
     setCurrentUser(updatedUser);
-    setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedUser : u));
+    const updatedUsers = users.map(u => u.id === currentUser.id ? updatedUser : u);
+    setUsers(updatedUsers);
+    
+    try {
+      await fetch(`${API_BASE}/users/${currentUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedUser),
+      });
+    } catch (error) {
+      console.error('Failed to update user profile:', error);
+    }
   };
 
-  const registerUser = (newUser: Omit<User, 'id' | 'approved'>) => {
-    const id = (users.length + 1).toString();
+  const registerUser = async (newUser: Omit<User, 'id' | 'approved'>): Promise<User> => {
     const safeName = newUser.name?.trim() || newUser.username;
-    let user: User = { ...newUser, name: safeName, id, approved: false };
+    let user: User = { ...newUser, name: safeName, id: '', approved: false };
 
     // If registering parent with child info, attempt automatic linking
     if (user.role === 'parent' && user.child && user.child.name && user.child.birthDate) {
@@ -351,62 +458,248 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         c => c.name.trim() === user.child!.name.trim() && c.birthDate === user.child!.birthDate && !c.parentId
       );
       if (matched) {
-        // link registered child to this new user
-        setRegisteredChildren(prev => prev.map(c => c.id === matched.id ? { ...c, parentId: id } : c));
-
         // ensure parent's child.classId matches the registered child's class
         user = { ...user, child: { ...user.child, classId: matched.classId } };
       }
     }
 
+    try {
+      const res = await fetch(`${API_BASE}/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(user),
+      });
+      if (res.ok) {
+        const createdUser = await res.json();
+        setUsers([...users, createdUser]);
+        
+        // Link child if matched
+        if (user.role === 'parent' && user.child && user.child.name && user.child.birthDate) {
+          const matched = registeredChildren.find(
+            c => c.name.trim() === user.child!.name.trim() && c.birthDate === user.child!.birthDate && !c.parentId
+          );
+          if (matched) {
+            setRegisteredChildren(prev => prev.map(c => c.id === matched.id ? { ...c, parentId: createdUser.id } : c));
+          }
+        }
+        
+        return createdUser;
+      }
+    } catch (error) {
+      console.error('Failed to register user:', error);
+    }
+
+    // Fallback: create locally
+    const id = (users.length + 1).toString();
+    user = { ...user, id };
     setUsers([...users, user]);
+    return user;
   };
 
-  const updateUserStatus = (userId: string, approved: boolean) => {
-    setUsers(prev => prev.map(u => u.id === userId ? { ...u, approved } : u));
+  const updateUserStatus = async (userId: string, approved: boolean) => {
+    const updatedUsers = users.map(u => u.id === userId ? { ...u, approved } : u);
+    setUsers(updatedUsers);
+    try {
+      const user = users.find(u => u.id === userId);
+      if (user) {
+        await fetch(`${API_BASE}/users/${userId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...user, approved }),
+        });
+      }
+    } catch (error) {
+      console.error('Failed to update user status:', error);
+    }
   };
 
-  const deleteUser = (userId: string) => {
+  const deleteUser = async (userId: string) => {
     setUsers(prev => prev.filter(u => u.id !== userId));
+    try {
+      await fetch(`${API_BASE}/users/${userId}`, {
+        method: 'DELETE',
+      });
+    } catch (error) {
+      console.error('Failed to delete user:', error);
+    }
   };
 
-  const addPost = (newPost: Omit<Post, 'id' | 'date'>) => {
-    const post: Post = {
-      ...newPost,
-      id: Date.now(),
-      date: new Date().toISOString().split('T')[0]
-    };
-    setPosts([post, ...posts]);
+  const addPost = async (newPost: Omit<Post, 'id' | 'date'>): Promise<Post> => {
+    try {
+      const res = await fetch(`${API_BASE}/posts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPost),
+      });
+      if (res.ok) {
+        const post = await res.json();
+        setPosts(prev => [post, ...prev]);
+        return post;
+      } else {
+        const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `Server error: ${res.status}`);
+      }
+    } catch (error) {
+      console.error('Failed to add post:', error);
+      throw error; // 에러를 다시 throw하여 호출하는 쪽에서 처리할 수 있도록
+    }
   };
 
-  const updatePost = (id: number, updatedPost: Partial<Post>) => {
-    setPosts(prev => prev.map(p => p.id === id ? { ...p, ...updatedPost } : p));
+  const updatePost = async (id: number, updatedPost: Partial<Post>): Promise<Post> => {
+    // 현재 상태를 함수형 업데이트로 저장
+    let originalPosts: Post[] = [];
+    let originalPost: Post | undefined;
+    
+    setPosts(prev => {
+      originalPosts = [...prev];
+      originalPost = prev.find(p => p.id === id);
+      // Optimistic update
+      return prev.map(p => p.id === id ? { ...p, ...updatedPost } : p);
+    });
+    
+    if (!originalPost) {
+      // 원래 상태로 롤백
+      setPosts(originalPosts);
+      throw new Error('Post not found');
+    }
+    
+    try {
+      const res = await fetch(`${API_BASE}/posts/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedPost),
+      });
+      if (res.ok) {
+        const post = await res.json();
+        // 서버에서 반환된 데이터로 업데이트
+        setPosts(prev => prev.map(p => p.id === id ? post : p));
+        return post;
+      } else {
+        // 실패 시 롤백
+        setPosts(originalPosts);
+        const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `Server error: ${res.status}`);
+      }
+    } catch (error) {
+      // 실패 시 롤백
+      setPosts(originalPosts);
+      console.error('Failed to update post:', error);
+      throw error;
+    }
   };
 
-  const deletePost = (postId: number) => {
-    setPosts(prev => prev.filter(p => p.id !== postId));
+  const deletePost = async (postId: number): Promise<void> => {
+    // 함수형 업데이트로 원본 상태 저장
+    let originalPosts: Post[] = [];
+    setPosts(prev => {
+      originalPosts = [...prev];
+      return prev.filter(p => p.id !== postId); // Optimistic update
+    });
+    
+    try {
+      const res = await fetch(`${API_BASE}/posts/${postId}`, {
+        method: 'DELETE',
+      });
+      // 성공 (200-299) 또는 404 (이미 삭제됨)는 정상 처리
+      if (res.ok || res.status === 404) {
+        return; // 삭제 완료
+      }
+      // 서버 오류인 경우 로컬 삭제 유지
+      if (res.status >= 500) {
+        console.warn('서버 오류. 로컬에서만 삭제됩니다.');
+        return;
+      }
+      // 기타 오류는 롤백
+      setPosts(originalPosts);
+      const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(errorData.error || `Server error: ${res.status}`);
+    } catch (error: any) {
+      // 네트워크 오류인 경우 로컬에서만 삭제 (fallback)
+      const isNetworkError = !error.message || 
+        error.message.includes('Failed to fetch') || 
+        error.message.includes('NetworkError') ||
+        error.name === 'TypeError' ||
+        error.name === 'NetworkError';
+      
+      if (isNetworkError) {
+        console.warn('서버 연결 실패. 로컬에서만 삭제됩니다.');
+        return; // 로컬 삭제는 이미 완료됨
+      }
+      // 실패 시 롤백
+      setPosts(originalPosts);
+      console.error('Failed to delete post:', error);
+      throw error;
+    }
   };
 
-  const addAlbumPhoto = (newPhoto: Omit<AlbumPhoto, 'id' | 'date'>) => {
-    const photo: AlbumPhoto = {
-        ...newPhoto,
-        id: Date.now(),
-        date: new Date().toISOString().split('T')[0]
-    };
-    setAlbumPhotos([photo, ...albumPhotos]);
+  const addAlbumPhoto = async (newPhoto: Omit<AlbumPhoto, 'id' | 'date'>): Promise<AlbumPhoto> => {
+    try {
+      const res = await fetch(`${API_BASE}/album-photos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPhoto),
+      });
+      if (res.ok) {
+        const photo = await res.json();
+        setAlbumPhotos(prev => [photo, ...prev]);
+        return photo;
+      } else {
+        const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `Server error: ${res.status}`);
+      }
+    } catch (error) {
+      console.error('Failed to add album photo:', error);
+      throw error;
+    }
   };
 
-  const deleteAlbumPhoto = (photoId: number) => {
-      setAlbumPhotos(prev => prev.filter(p => p.id !== photoId));
+  const deleteAlbumPhoto = async (photoId: number): Promise<void> => {
+    // 함수형 업데이트로 원본 상태 저장
+    let originalPhotos: AlbumPhoto[] = [];
+    setAlbumPhotos(prev => {
+      originalPhotos = [...prev];
+      return prev.filter(p => p.id !== photoId); // Optimistic update
+    });
+    
+    try {
+      const res = await fetch(`${API_BASE}/album-photos/${photoId}`, {
+        method: 'DELETE',
+      });
+      // 성공 (200-299) 또는 404 (이미 삭제됨)는 정상 처리
+      if (res.ok || res.status === 404) {
+        return; // 삭제 완료
+      }
+      // 서버 오류인 경우 로컬 삭제 유지
+      if (res.status >= 500) {
+        console.warn('서버 오류. 로컬에서만 삭제됩니다.');
+        return;
+      }
+      // 기타 오류는 롤백
+      setAlbumPhotos(originalPhotos);
+      const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(errorData.error || `Server error: ${res.status}`);
+    } catch (error: any) {
+      // 네트워크 오류인 경우 로컬에서만 삭제 (fallback)
+      const isNetworkError = !error.message || 
+        error.message.includes('Failed to fetch') || 
+        error.message.includes('NetworkError') ||
+        error.name === 'TypeError' ||
+        error.name === 'NetworkError';
+      
+      if (isNetworkError) {
+        console.warn('서버 연결 실패. 로컬에서만 삭제됩니다.');
+        return; // 로컬 삭제는 이미 완료됨
+      }
+      // 실패 시 롤백
+      setAlbumPhotos(originalPhotos);
+      console.error('Failed to delete album photo:', error);
+      throw error;
+    }
   };
 
-  const addRegisteredChild = (newChild: Omit<RegisteredChild, 'id'>) => {
-    let child: RegisteredChild = {
-      ...newChild,
-      id: Date.now().toString()
-    };
-
+  const addRegisteredChild = async (newChild: Omit<RegisteredChild, 'id'>) => {
     // Attempt to auto-link with existing parent
+    let child: RegisteredChild = { ...newChild, id: '' };
     const parentUser = users.find(u => 
       u.role === 'parent' && 
       u.child && 
@@ -417,15 +710,47 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       child = { ...child, parentId: parentUser.id };
     }
 
-    setRegisteredChildren([...registeredChildren, child]);
+    try {
+      const res = await fetch(`${API_BASE}/registered-children`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newChild),
+      });
+      if (res.ok) {
+        const createdChild = await res.json();
+        setRegisteredChildren([...registeredChildren, createdChild]);
+      }
+    } catch (error) {
+      console.error('Failed to add registered child:', error);
+      // Fallback: add locally
+      child = { ...child, id: Date.now().toString() };
+      setRegisteredChildren([...registeredChildren, child]);
+    }
   };
 
-  const updateRegisteredChild = (id: string, updates: Partial<RegisteredChild>) => {
-    setRegisteredChildren(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+  const updateRegisteredChild = async (id: string, updates: Partial<RegisteredChild>) => {
+    const updatedChildren = registeredChildren.map(c => c.id === id ? { ...c, ...updates } : c);
+    setRegisteredChildren(updatedChildren);
+    try {
+      await fetch(`${API_BASE}/registered-children/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+    } catch (error) {
+      console.error('Failed to update registered child:', error);
+    }
   };
 
-  const deleteRegisteredChild = (id: string) => {
+  const deleteRegisteredChild = async (id: string) => {
     setRegisteredChildren(prev => prev.filter(c => c.id !== id));
+    try {
+      await fetch(`${API_BASE}/registered-children/${id}`, {
+        method: 'DELETE',
+      });
+    } catch (error) {
+      console.error('Failed to delete registered child:', error);
+    }
   };
 
   const matchChildWithParent = (childName: string, birthDate: string): RegisteredChild | null => {
@@ -435,37 +760,177 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return child || null;
   };
 
-  const addClass = (newClass: Omit<ClassData, 'id'>) => {
-    const classData: ClassData = {
-      ...newClass,
-      id: Date.now().toString()
-    };
-    setClasses([...classes, classData]);
+  const addClass = async (newClass: Omit<ClassData, 'id'>) => {
+    try {
+      const res = await fetch(`${API_BASE}/classes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newClass),
+      });
+      if (res.ok) {
+        const classData = await res.json();
+        setClasses([...classes, classData]);
+      }
+    } catch (error) {
+      console.error('Failed to add class:', error);
+      // Fallback: add locally
+      const classData: ClassData = {
+        ...newClass,
+        id: Date.now().toString()
+      };
+      setClasses([...classes, classData]);
+    }
   };
 
-  const updateClass = (id: string, updates: Partial<ClassData>) => {
-    setClasses(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+  const updateClass = async (id: string, updates: Partial<ClassData>) => {
+    const updatedClasses = classes.map(c => c.id === id ? { ...c, ...updates } : c);
+    setClasses(updatedClasses);
+    try {
+      await fetch(`${API_BASE}/classes/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+    } catch (error) {
+      console.error('Failed to update class:', error);
+    }
   };
 
-  const deleteClass = (id: string) => {
-    setClasses(prev => prev.filter(c => c.id !== id));
+  const deleteClass = async (id: string): Promise<void> => {
+    // 함수형 업데이트로 원본 상태 저장
+    let originalClasses: ClassData[] = [];
+    setClasses(prev => {
+      originalClasses = [...prev];
+      return prev.filter(c => c.id !== id); // Optimistic update
+    });
+    
+    try {
+      const res = await fetch(`${API_BASE}/classes/${id}`, {
+        method: 'DELETE',
+      });
+      // 성공 (200-299) 또는 404 (이미 삭제됨)는 정상 처리
+      if (res.ok || res.status === 404) {
+        return; // 삭제 완료
+      }
+      // 서버 오류인 경우 로컬 삭제 유지
+      if (res.status >= 500) {
+        console.warn('서버 오류. 로컬에서만 삭제됩니다.');
+        return;
+      }
+      // 기타 오류는 롤백
+      setClasses(originalClasses);
+      const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(errorData.error || `Server error: ${res.status}`);
+    } catch (error: any) {
+      // 네트워크 오류인 경우 로컬에서만 삭제 (fallback)
+      const isNetworkError = !error.message || 
+        error.message.includes('Failed to fetch') || 
+        error.message.includes('NetworkError') ||
+        error.name === 'TypeError' ||
+        error.name === 'NetworkError';
+      
+      if (isNetworkError) {
+        console.warn('서버 연결 실패. 로컬에서만 삭제됩니다.');
+        return; // 로컬 삭제는 이미 완료됨
+      }
+      // 실패 시 롤백
+      setClasses(originalClasses);
+      console.error('Failed to delete class:', error);
+      throw error;
+    }
   };
 
-  const addTeacher = (newTeacher: Omit<Teacher, 'id'>) => {
-    const teacher: Teacher = {
-      ...newTeacher,
-      id: Date.now().toString()
-    };
-    setTeachers([...teachers, teacher]);
+  const addTeacher = async (newTeacher: Omit<Teacher, 'id'>) => {
+    try {
+      const res = await fetch(`${API_BASE}/teachers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTeacher),
+      });
+      if (res.ok) {
+        const teacher = await res.json();
+        setTeachers([...teachers, teacher]);
+      }
+    } catch (error) {
+      console.error('Failed to add teacher:', error);
+      // Fallback: add locally
+      const teacher: Teacher = {
+        ...newTeacher,
+        id: Date.now().toString()
+      };
+      setTeachers([...teachers, teacher]);
+    }
   };
 
-  const updateTeacher = (id: string, updates: Partial<Teacher>) => {
-    setTeachers(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+  const updateTeacher = async (id: string, updates: Partial<Teacher>) => {
+    const updatedTeachers = teachers.map(t => t.id === id ? { ...t, ...updates } : t);
+    setTeachers(updatedTeachers);
+    try {
+      await fetch(`${API_BASE}/teachers/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+    } catch (error) {
+      console.error('Failed to update teacher:', error);
+    }
   };
 
-  const deleteTeacher = (id: string) => {
-    setTeachers(prev => prev.filter(t => t.id !== id));
+  const deleteTeacher = async (id: string): Promise<void> => {
+    // 함수형 업데이트로 원본 상태 저장
+    let originalTeachers: Teacher[] = [];
+    setTeachers(prev => {
+      originalTeachers = [...prev];
+      return prev.filter(t => t.id !== id); // Optimistic update
+    });
+    
+    try {
+      const res = await fetch(`${API_BASE}/teachers/${id}`, {
+        method: 'DELETE',
+      });
+      // 성공 (200-299) 또는 404 (이미 삭제됨)는 정상 처리
+      if (res.ok || res.status === 404) {
+        return; // 삭제 완료
+      }
+      // 서버 오류인 경우 로컬 삭제 유지
+      if (res.status >= 500) {
+        console.warn('서버 오류. 로컬에서만 삭제됩니다.');
+        return;
+      }
+      // 기타 오류는 롤백
+      setTeachers(originalTeachers);
+      const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(errorData.error || `Server error: ${res.status}`);
+    } catch (error: any) {
+      // 네트워크 오류인 경우 로컬에서만 삭제 (fallback)
+      const isNetworkError = !error.message || 
+        error.message.includes('Failed to fetch') || 
+        error.message.includes('NetworkError') ||
+        error.name === 'TypeError' ||
+        error.name === 'NetworkError';
+      
+      if (isNetworkError) {
+        console.warn('서버 연결 실패. 로컬에서만 삭제됩니다.');
+        return; // 로컬 삭제는 이미 완료됨
+      }
+      // 실패 시 롤백
+      setTeachers(originalTeachers);
+      console.error('Failed to delete teacher:', error);
+      throw error;
+    }
   };
+
+  // Show loading state while data is being fetched
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">데이터를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AppContext.Provider value={{

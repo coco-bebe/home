@@ -61,12 +61,13 @@ export function Navbar() {
                   href={
                     currentUser.role === 'admin' ? "/admin" : 
                     currentUser.role === 'teacher' ? "/teacher" : 
+                    currentUser.role === 'nutritionist' ? "/nutritionist" : 
                     "/profile"
                   }
                   className="flex items-center gap-2 bg-orange-50 text-orange-600 px-3 py-1.5 rounded-full text-sm font-bold hover:bg-orange-100 transition-colors border border-orange-100"
                 >
                   <UserCircle className="w-4 h-4" />
-                  {currentUser.name}님
+                  {currentUser.role === 'nutritionist' ? `${currentUser.name} 선생님` : `${currentUser.name}님`}
                 </Link>
              </div>
           ) : (
@@ -105,12 +106,18 @@ export function Navbar() {
           <div className="border-t border-gray-100 pt-2 mt-2">
              {currentUser ? (
                 <Link 
-                  href={currentUser.role === 'admin' ? "/admin" : "/profile"}
+                  href={
+                    currentUser.role === 'admin' ? "/admin" : 
+                    currentUser.role === 'teacher' ? "/teacher" : 
+                    currentUser.role === 'nutritionist' ? "/nutritionist" : 
+                    "/profile"
+                  }
                   className="text-base font-bold text-orange-600 p-2 hover:bg-orange-50 rounded-lg flex items-center gap-2" 
                   onClick={() => setIsOpen(false)}
                 >
                   <UserCircle className="w-5 h-5" />
-                  {currentUser.name}님 (마이페이지)
+                  {currentUser.role === 'nutritionist' ? `${currentUser.name} 선생님` : `${currentUser.name}님`}
+                  {currentUser.role !== 'admin' && currentUser.role !== 'teacher' && currentUser.role !== 'nutritionist' && ' (마이페이지)'}
                 </Link>
              ) : (
                 <Link 

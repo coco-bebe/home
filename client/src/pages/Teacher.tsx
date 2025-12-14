@@ -103,14 +103,14 @@ export default function Teacher() {
     setEditingSchedule(editingSchedule.filter((_, i) => i !== index));
   };
 
-  const handleSaveSchedule = () => {
+  const handleSaveSchedule = async () => {
     if (!teacherClassId) return;
-    updateClass(teacherClassId, { schedule: editingSchedule });
+    await updateClass(teacherClassId, { schedule: editingSchedule });
     setIsScheduleEditOpen(false);
-    toast({ title: "일과표 저장 완료", description: "반의 일과표가 업데이트되었습니다." });
+    toast({ title: "일과표 저장 완료", description: "반의 일과표가 업데이트되어 저장되었습니다." });
   };
 
-  const handleSavePost = () => {
+  const handleSavePost = async () => {
     if (!newPostTitle || !newPostContent) {
       toast({ variant: "destructive", description: "제목과 내용을 입력해주세요." });
       return;
@@ -125,19 +125,26 @@ export default function Teacher() {
       parentId: newPostParentId !== "all" ? newPostParentId : undefined,
     };
 
-    if (editingPostId) {
-      updatePost(editingPostId, postData);
-      toast({ title: "공지사항 수정 완료" });
-    } else {
-      addPost(postData);
-      toast({ title: "공지사항 작성 완료" });
+    try {
+      if (editingPostId) {
+        await updatePost(editingPostId, postData);
+        toast({ title: "공지사항 수정 완료", description: "변경사항이 저장되었습니다." });
+      } else {
+        await addPost(postData);
+        toast({ title: "공지사항 작성 완료", description: "공지사항이 저장되었습니다." });
+      }
+      setIsPostDialogOpen(false);
+      setEditingPostId(null);
+      setNewPostTitle("");
+      setNewPostContent("");
+      setNewPostParentId("all");
+    } catch (error: any) {
+      toast({ 
+        variant: "destructive", 
+        title: "저장 실패", 
+        description: error.message || "서버에 저장하지 못했습니다. 서버가 실행 중인지 확인해주세요." 
+      });
     }
-
-    setIsPostDialogOpen(false);
-    setEditingPostId(null);
-    setNewPostTitle("");
-    setNewPostContent("");
-    setNewPostParentId("all");
   };
 
   const handleEditPost = (post: any) => {
@@ -148,46 +155,61 @@ export default function Teacher() {
     setIsPostDialogOpen(true);
   };
 
-  const handleDeletePost = (postId: number) => {
+  const handleDeletePost = async (postId: number) => {
     if (confirm("정말 삭제하시겠습니까?")) {
-      deletePost(postId);
-      toast({ description: "공지사항이 삭제되었습니다." });
+      try {
+        await deletePost(postId);
+        toast({ description: "공지사항이 삭제되었습니다." });
+      } catch (error: any) {
+        toast({ 
+          variant: "destructive", 
+          title: "삭제 실패", 
+          description: error.message || "서버에서 삭제하지 못했습니다. 서버가 실행 중인지 확인해주세요." 
+        });
+      }
     }
   };
 
-  const handleSaveCurriculum = () => {
+  const handleSaveCurriculum = async () => {
     if (!curriclumUrl) {
       toast({ variant: "destructive", description: "교육 계획안 내용을 입력해주세요." });
       return;
     }
     if (!teacherClassId) return;
-    updateClass(teacherClassId, { description: curriclumUrl });
+    await updateClass(teacherClassId, { description: curriclumUrl });
     setIsCurriculumEditOpen(false);
-    toast({ title: "교육 계획안 저장 완료" });
+    toast({ title: "교육 계획안 저장 완료", description: "변경사항이 저장되었습니다." });
   };
 
-  const handleAddPhoto = () => {
+  const handleAddPhoto = async () => {
     if (!photoTitle || !photoUrl) {
       toast({ variant: "destructive", description: "제목과 이미지 URL을 입력해주세요." });
       return;
     }
 
-    addPost({
-      title: photoTitle,
-      content: `[활동사진] ${photoTitle}`,
-      type: 'album',
-      author: currentUser.name,
-      classId: teacherClassId,
-      images: [photoUrl]
-    });
-
-    setIsPhotoDialogOpen(false);
-    setPhotoTitle("");
-    setPhotoUrl("");
-    toast({ title: "활동사진 등록 완료" });
+    try {
+      await addPost({
+        title: photoTitle,
+        content: `[활동사진] ${photoTitle}`,
+        type: 'album',
+        author: currentUser.name,
+        classId: teacherClassId,
+        images: [photoUrl]
+      });
+      setIsPhotoDialogOpen(false);
+      setPhotoTitle("");
+      setPhotoUrl("");
+      toast({ title: "활동사진 등록 완료", description: "활동사진이 저장되었습니다." });
+    } catch (error: any) {
+      toast({ 
+        variant: "destructive", 
+        title: "등록 실패", 
+        description: error.message || "서버에 저장하지 못했습니다. 서버가 실행 중인지 확인해주세요." 
+      });
+    }
   };
 
-  const handleSaveProfilePhoto = () => {
+  const handleSaveProfilePhoto = async () => {
     if (!profilePhotoUrl) {
       toast({ variant: "destructive", description: "사진 URL을 입력해주세요." });
       return;
@@ -200,31 +222,31 @@ export default function Teacher() {
         ? convertGoogleDriveUrl(profilePhotoUrl)
         : profilePhotoUrl;
       
-      updateTeacher(currentUser.id, { photoUrl: finalPhotoUrl });
+      await updateTeacher(currentUser.id, { photoUrl: finalPhotoUrl });
       setIsProfilePhotoDialogOpen(false);
       setProfilePhotoUrl("");
-      toast({ title: "선생님 사진이 저장되었습니다." });
+      toast({ title: "선생님 사진이 저장되었습니다.", description: "변경사항이 저장되었습니다." });
     }
   };
 
-  const handleDeleteProfilePhoto = () => {
+  const handleDeleteProfilePhoto = async () => {
     if (confirm("정말 삭제하시겠습니까?")) {
-      updateTeacher(currentUser.id, { photoUrl: undefined });
+      await updateTeacher(currentUser.id, { photoUrl: undefined });
       toast({ description: "사진이 삭제되었습니다." });
     }
   };
 
-  const handleSaveProfileEdit = () => {
+  const handleSaveProfileEdit = async () => {
     if (!editName) { toast({ variant: 'destructive', description: '이름을 입력해주세요.' }); return; }
     if (currentUser?.id) {
-      updateTeacher(currentUser.id, { name: editName, phone: editPhone });
-      updateUserProfile({ name: editName, phone: editPhone });
+      await updateTeacher(currentUser.id, { name: editName, phone: editPhone });
+      await updateUserProfile({ name: editName, phone: editPhone });
       setIsProfileEditOpen(false);
-      toast({ title: '프로필이 저장되었습니다.' });
+      toast({ title: '프로필이 저장되었습니다.', description: "변경사항이 저장되었습니다." });
     }
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (!newPassword || !newPasswordCheck) {
       toast({ variant: "destructive", description: "새 비밀번호를 입력해주세요." });
       return;
@@ -238,11 +260,13 @@ export default function Teacher() {
       return;
     }
 
-    updateTeacher(currentUser.id, { password: newPassword });
+    // 선생님 정보와 사용자 프로필 모두 업데이트하여 저장 보장
+    await updateTeacher(currentUser.id, { password: newPassword });
+    await updateUserProfile({ password: newPassword });
     setIsPasswordDialogOpen(false);
     setNewPassword("");
     setNewPasswordCheck("");
-    toast({ title: "비밀번호가 변경되었습니다." });
+    toast({ title: "비밀번호가 변경되었습니다.", description: "변경사항이 저장되었습니다." });
   };
 
   const activityPhotos = posts.filter(p => p.classId === teacherClassId && p.type === 'album');

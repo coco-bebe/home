@@ -13,6 +13,7 @@ import Album from "@/pages/Album";
 import Login from "@/pages/Login";
 import Admin from "@/pages/Admin";
 import Teacher from "@/pages/Teacher";
+import Nutritionist from "@/pages/Nutritionist";
 import ParentProfile from "@/pages/ParentProfile";
 
 function Router() {
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/admin" component={Admin} />
       <Route path="/teacher" component={Teacher} />
+      <Route path="/nutritionist" component={Nutritionist} />
       <Route path="/profile" component={ParentProfile} />
       <Route component={NotFound} />
     </Switch>

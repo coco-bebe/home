@@ -4,6 +4,7 @@ import { useApp } from "@/lib/AppContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
+import { GoogleDriveImage } from "@/components/ui/GoogleDriveImage";
 
 export default function Notices() {
   const { posts, classes } = useApp();
@@ -16,6 +17,11 @@ export default function Notices() {
   // 행사 안내 (event 타입만)
   const events = posts
     .filter((p) => p.type === "event")
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  
+  // 식단표 (menu 타입만)
+  const menus = posts
+    .filter((p) => p.type === "menu")
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
@@ -31,9 +37,10 @@ export default function Notices() {
 
       <div className="container mx-auto px-4 pb-20">
          <Tabs defaultValue="notices" className="w-full">
-            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-12">
+            <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3 mb-12">
                <TabsTrigger value="notices">공지사항</TabsTrigger>
                <TabsTrigger value="events">행사안내</TabsTrigger>
+               <TabsTrigger value="menus">식단표</TabsTrigger>
             </TabsList>
 
             <TabsContent value="notices">
@@ -103,6 +110,46 @@ export default function Notices() {
                ) : (
                  <div className="p-12 text-center text-gray-400 bg-white rounded-2xl shadow-sm border border-gray-100">
                    등록된 행사 안내가 없습니다.
+               </div>
+               )}
+            </TabsContent>
+
+            <TabsContent value="menus">
+               {menus.length > 0 ? (
+               <div className="space-y-6">
+                    {menus.map((menu) => (
+                        <div key={menu.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all">
+                          <div className="flex items-start justify-between mb-4">
+                            <div>
+                              <h3 className="font-bold text-xl text-gray-800 mb-2">{menu.title}</h3>
+                              <div className="flex items-center gap-3 text-sm text-gray-500">
+                                <span>{menu.author}</span>
+                                <span>•</span>
+                                <span>{menu.date}</span>
+                              </div>
+                            </div>
+                            <span className="inline-block px-3 py-1 bg-orange-100 text-orange-600 rounded-full text-xs font-bold">
+                              식단표
+                            </span>
+                          </div>
+                          {menu.content && (
+                            <p className="text-gray-600 mb-4">{menu.content}</p>
+                          )}
+                          {menu.images && menu.images[0] && (
+                            <div className="mt-4">
+                              <GoogleDriveImage
+                                src={menu.images[0]}
+                                alt={menu.title}
+                                className="w-full h-auto rounded-lg border border-gray-200"
+                              />
+                            </div>
+                          )}
+                     </div>
+                  ))}
+                     </div>
+               ) : (
+                 <div className="p-12 text-center text-gray-400 bg-white rounded-2xl shadow-sm border border-gray-100">
+                   등록된 식단표가 없습니다.
                </div>
                )}
             </TabsContent>

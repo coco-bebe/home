@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Users, Bell, Image, LogOut, Plus, Trash2, CheckCircle, XCircle, Save, Upload, Home as HomeIcon, Edit, Baby, Lock } from "lucide-react";
+import { Users, Bell, Image, LogOut, Plus, Trash2, CheckCircle, XCircle, Save, Upload, Home as HomeIcon, Edit, Baby, Lock, UtensilsCrossed } from "lucide-react";
 import { cn, convertGoogleDriveUrl } from "@/lib/utils";
 import { GoogleDriveImage } from "@/components/ui/GoogleDriveImage";
 import { useState, useEffect } from "react";
@@ -17,7 +17,7 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const { 
      logout, 
-     users, updateUserStatus, deleteUser,
+     users, updateUserStatus, deleteUser, registerUser,
      posts, deletePost, addPost, updatePost,
      albumPhotos, deleteAlbumPhoto, addAlbumPhoto,
      currentUser, updateUserProfile, updateUserPassword,
@@ -65,6 +65,14 @@ export default function Admin() {
   const [newTeacherPhone, setNewTeacherPhone] = useState("");
   const [newTeacherClassId, setNewTeacherClassId] = useState("");
   const [isTeacherDialogOpen, setIsTeacherDialogOpen] = useState(false);
+
+  // Nutritionist Management State
+  const [editingNutritionistId, setEditingNutritionistId] = useState<string | null>(null);
+  const [newNutritionistName, setNewNutritionistName] = useState("");
+  const [newNutritionistUsername, setNewNutritionistUsername] = useState("");
+  const [newNutritionistPassword, setNewNutritionistPassword] = useState("");
+  const [newNutritionistPhone, setNewNutritionistPhone] = useState("");
+  const [isNutritionistDialogOpen, setIsNutritionistDialogOpen] = useState(false);
   
    // Class Management State
    const [isClassDialogOpen, setIsClassDialogOpen] = useState(false);
@@ -164,14 +172,22 @@ export default function Admin() {
      toast({ title: "비밀번호 변경", description: "비밀번호가 업데이트되었습니다." });
   };
 
-  const handleDeletePost = (id: number) => {
+  const handleDeletePost = async (id: number) => {
      if (confirm("게시글을 삭제하시겠습니까?")) {
-        deletePost(id);
-        toast({ description: "게시글이 삭제되었습니다." });
+        try {
+          await deletePost(id);
+          toast({ description: "게시글이 삭제되었습니다." });
+        } catch (error: any) {
+          toast({ 
+            variant: "destructive", 
+            title: "삭제 실패", 
+            description: error.message || "서버에서 삭제하지 못했습니다. 서버가 실행 중인지 확인해주세요." 
+          });
+        }
      }
   };
 
-  const handleSavePost = () => {
+  const handleSavePost = async () => {
       if (!newPostTitle || !newPostContent) {
           toast({ variant: "destructive", description: "제목과 내용을 입력해주세요." });
           return;
@@ -192,15 +208,22 @@ export default function Admin() {
           images: finalImageUrl ? [finalImageUrl] : undefined,
       };
 
-      if (editingPostId) {
-          updatePost(editingPostId, postData);
-          toast({ title: "게시글 수정 완료", description: "게시글이 수정되었습니다." });
-      } else {
-          addPost(postData);
-          toast({ title: "게시글 등록 완료", description: "새로운 게시글이 등록되었습니다." });
+      try {
+        if (editingPostId) {
+            await updatePost(editingPostId, postData);
+            toast({ title: "게시글 수정 완료", description: "변경사항이 저장되었습니다." });
+        } else {
+            await addPost(postData);
+            toast({ title: "게시글 등록 완료", description: "새로운 게시글이 저장되었습니다." });
+        }
+        setIsPostDialogOpen(false);
+      } catch (error: any) {
+        toast({ 
+          variant: "destructive", 
+          title: "저장 실패", 
+          description: error.message || "서버에 저장하지 못했습니다. 서버가 실행 중인지 확인해주세요." 
+        });
       }
-      
-      setIsPostDialogOpen(false);
   };
 
   const handleEditPost = (post: Post) => {
@@ -214,7 +237,7 @@ export default function Admin() {
       setIsPostDialogOpen(true);
   };
 
-  const handleAddPhoto = () => {
+  const handleAddPhoto = async () => {
       if (!newPhotoTitle || !newPhotoUrl) {
           toast({ variant: "destructive", description: "제목과 이미지 URL을 입력해주세요." });
           return;
@@ -224,15 +247,23 @@ export default function Admin() {
         ? convertGoogleDriveLink(newPhotoUrl) 
         : newPhotoUrl;
       
-      addAlbumPhoto({
-          title: newPhotoTitle,
-          url: finalUrl,
-      });
-      setIsAlbumDialogOpen(false);
-      setNewPhotoTitle("");
-      setNewPhotoUrl("");
-      setPreviewImageUrl("");
-      toast({ title: "사진 업로드 완료", description: "앨범에 사진이 추가되었습니다." });
+      try {
+        await addAlbumPhoto({
+            title: newPhotoTitle,
+            url: finalUrl,
+        });
+        setIsAlbumDialogOpen(false);
+        setNewPhotoTitle("");
+        setNewPhotoUrl("");
+        setPreviewImageUrl("");
+        toast({ title: "사진 업로드 완료", description: "변경사항이 저장되었습니다." });
+      } catch (error: any) {
+        toast({ 
+          variant: "destructive", 
+          title: "업로드 실패", 
+          description: error.message || "서버에 저장하지 못했습니다. 서버가 실행 중인지 확인해주세요." 
+        });
+      }
   };
 
   const handleAddChild = () => {
@@ -248,7 +279,7 @@ export default function Admin() {
               birthDate: newChildBirthDate,
               classId: newChildClassId,
           });
-          toast({ title: "아이 정보 수정 완료", description: "아이 정보가 수정되었습니다." });
+          toast({ title: "아이 정보 수정 완료", description: "변경사항이 저장되었습니다." });
       } else {
           // Add new child
           addRegisteredChild({
@@ -256,7 +287,7 @@ export default function Admin() {
               birthDate: newChildBirthDate,
               classId: newChildClassId,
           });
-          toast({ title: "아이 등록 완료", description: "새로운 아이가 등록되었습니다." });
+          toast({ title: "아이 등록 완료", description: "변경사항이 저장되었습니다." });
       }
       
       setIsChildDialogOpen(false);
@@ -281,7 +312,7 @@ export default function Admin() {
       }
   };
 
-  const handleSaveTeacher = () => {
+  const handleSaveTeacher = async () => {
     if (!newTeacherName || !newTeacherUsername || !newTeacherPassword || !newTeacherClassId) {
       toast({ variant: "destructive", description: "모든 필드를 입력해주세요." });
       return;
@@ -297,11 +328,11 @@ export default function Admin() {
     };
 
     if (editingTeacherId) {
-      updateTeacher(editingTeacherId, teacherData);
-      toast({ title: "선생님 수정 완료", description: "선생님 정보가 수정되었습니다." });
+      await updateTeacher(editingTeacherId, teacherData);
+      toast({ title: "선생님 수정 완료", description: "변경사항이 저장되었습니다." });
     } else {
-      addTeacher(teacherData);
-      toast({ title: "선생님 등록 완료", description: "새로운 선생님이 등록되었습니다." });
+      await addTeacher(teacherData);
+      toast({ title: "선생님 등록 완료", description: "변경사항이 저장되었습니다." });
     }
 
     setIsTeacherDialogOpen(false);
@@ -323,10 +354,78 @@ export default function Admin() {
     setIsTeacherDialogOpen(true);
   };
 
-  const handleDeleteTeacher = (id: string) => {
+  const handleDeleteTeacher = async (id: string) => {
     if (confirm("정말 삭제하시겠습니까?")) {
-      deleteTeacher(id);
-      toast({ description: "선생님이 삭제되었습니다." });
+      try {
+        await deleteTeacher(id);
+        toast({ description: "선생님이 삭제되었습니다." });
+      } catch (error: any) {
+        toast({ 
+          variant: "destructive", 
+          title: "삭제 실패", 
+          description: error.message || "서버에서 삭제하지 못했습니다. 서버가 실행 중인지 확인해주세요." 
+        });
+      }
+    }
+  };
+
+  const handleSaveNutritionist = async () => {
+    if (!newNutritionistName || !newNutritionistUsername || !newNutritionistPassword) {
+      toast({ variant: "destructive", description: "이름, 아이디, 비밀번호를 입력해주세요." });
+      return;
+    }
+
+    const nutritionistData = {
+      name: newNutritionistName,
+      username: newNutritionistUsername,
+      password: newNutritionistPassword,
+      role: 'nutritionist' as const,
+      phone: newNutritionistPhone,
+      approved: true
+    };
+
+    if (editingNutritionistId) {
+      // Update existing nutritionist
+      const existingUser = users.find(u => u.id === editingNutritionistId);
+      if (existingUser) {
+        await updateUserProfile({
+          ...existingUser,
+          name: newNutritionistName,
+          username: newNutritionistUsername,
+          password: newNutritionistPassword,
+          phone: newNutritionistPhone,
+        });
+        toast({ title: "영양사 수정 완료", description: "변경사항이 저장되었습니다." });
+      }
+    } else {
+      // Add new nutritionist
+      const newUser = await registerUser(nutritionistData);
+      // Immediately approve the new nutritionist
+      await updateUserStatus(newUser.id, true);
+      toast({ title: "영양사 등록 완료", description: "변경사항이 저장되었습니다." });
+    }
+
+    setIsNutritionistDialogOpen(false);
+    setEditingNutritionistId(null);
+    setNewNutritionistName("");
+    setNewNutritionistUsername("");
+    setNewNutritionistPassword("");
+    setNewNutritionistPhone("");
+  };
+
+  const handleEditNutritionist = (nutritionist: any) => {
+    setEditingNutritionistId(nutritionist.id);
+    setNewNutritionistName(nutritionist.name);
+    setNewNutritionistUsername(nutritionist.username);
+    setNewNutritionistPassword(nutritionist.password);
+    setNewNutritionistPhone(nutritionist.phone || "");
+    setIsNutritionistDialogOpen(true);
+  };
+
+  const handleDeleteNutritionist = (id: string) => {
+    if (confirm("정말 삭제하시겠습니까?")) {
+      deleteUser(id);
+      toast({ description: "영양사가 삭제되었습니다." });
     }
   };
 
@@ -344,18 +443,22 @@ export default function Admin() {
       return;
     }
 
-    updateUserProfile({ password: adminPassword });
+    // 관리자 비밀번호 변경 - updateUserPassword와 updateUserProfile 모두 사용하여 저장 보장
+    if (currentUser?.id) {
+      updateUserPassword(currentUser.id, adminPassword);
+      updateUserProfile({ password: adminPassword });
+    }
     setIsAdminPasswordDialogOpen(false);
     setAdminPassword("");
     setAdminPasswordCheck("");
-    toast({ title: "비밀번호가 변경되었습니다." });
+    toast({ title: "비밀번호가 변경되었습니다.", description: "변경사항이 저장되었습니다." });
   };
 
    const handleSaveAdminProfile = () => {
       if (!adminName) { toast({ variant: 'destructive', description: '이름을 입력해주세요.' }); return; }
       updateUserProfile({ name: adminName, username: adminUsername, phone: adminPhone });
       setIsAdminProfileDialogOpen(false);
-      toast({ title: '프로필이 저장되었습니다.' });
+      toast({ title: '프로필이 저장되었습니다.', description: "변경사항이 저장되었습니다." });
    };
 
   return (
@@ -374,6 +477,7 @@ export default function Admin() {
                 { id: "children", label: "아이 관리", icon: Baby },
                 { id: "classes", label: "반 관리", icon: Users },
                 { id: "teachers", label: "선생님 관리", icon: Users },
+                { id: "nutritionists", label: "영양사 관리", icon: UtensilsCrossed },
                 { id: "board", label: "게시판 관리", icon: Bell },
                 { id: "album", label: "앨범 관리", icon: Image },
                 { id: "about", label: "소개 관리", icon: Bell },
@@ -421,6 +525,7 @@ export default function Admin() {
                 {activeTab === 'children' && '아이 관리'}
                 {activeTab === 'classes' && '반 관리'}
                 {activeTab === 'teachers' && '선생님 관리'}
+                {activeTab === 'nutritionists' && '영양사 관리'}
                 {activeTab === 'board' && '게시판 관리'}
                 {activeTab === 'album' && '앨범 관리'}
                {activeTab === 'about' && '어린이집 소개 관리'}
@@ -656,11 +761,11 @@ export default function Admin() {
                             </div>
                          </div>
                          <DialogFooter>
-                            <Button onClick={() => {
+                            <Button onClick={async () => {
                                if (!newClassName) { toast({ variant: 'destructive', description: '반 이름을 입력해주세요.' }); return; }
                                const cls = { name: newClassName, age: newClassAge || '', teacher: newClassTeacherId || '', color: newClassColor, description: newClassDescription, schedule: [] };
-                               if (editingClassId) { updateClass(editingClassId, cls); toast({ title: '반 수정 완료' }); }
-                               else { addClass(cls); toast({ title: '반 등록 완료' }); }
+                               if (editingClassId) { await updateClass(editingClassId, cls); toast({ title: '반 수정 완료', description: "변경사항이 저장되었습니다." }); }
+                               else { await addClass(cls); toast({ title: '반 등록 완료', description: "변경사항이 저장되었습니다." }); }
                                setIsClassDialogOpen(false);
                                setEditingClassId(null);
                                setNewClassName(''); setNewClassAge(''); setNewClassTeacherId(''); setNewClassColor('#F97316'); setNewClassDescription('');
@@ -699,7 +804,20 @@ export default function Admin() {
                                      }} className="text-blue-500 hover:text-blue-600 hover:bg-blue-50">
                                         <Edit className="w-4 h-4" />
                                      </Button>
-                                     <Button size="icon" variant="ghost" onClick={() => { if (confirm('정말 삭제하시겠습니까?')) { deleteClass(c.id); toast({ description: '반이 삭제되었습니다.' }); } }} className="text-red-500 hover:text-red-600 hover:bg-red-50">
+                                     <Button size="icon" variant="ghost" onClick={async () => { 
+                                       if (confirm('정말 삭제하시겠습니까?')) {
+                                         try {
+                                           await deleteClass(c.id);
+                                           toast({ description: '반이 삭제되었습니다.' });
+                                         } catch (error: any) {
+                                           toast({ 
+                                             variant: "destructive", 
+                                             title: "삭제 실패", 
+                                             description: error.message || "서버에서 삭제하지 못했습니다. 서버가 실행 중인지 확인해주세요." 
+                                           });
+                                         }
+                                       }
+                                     }} className="text-red-500 hover:text-red-600 hover:bg-red-50">
                                         <Trash2 className="w-4 h-4" />
                                      </Button>
                                   </div>
@@ -813,6 +931,108 @@ export default function Admin() {
                       ))}
                    </TableBody>
                 </Table>
+             </div>
+          )}
+
+          {/* Nutritionist Management */}
+          {activeTab === 'nutritionists' && (
+             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
+                <div className="flex justify-between items-center">
+                   <h3 className="text-lg font-bold text-gray-800">영양사 목록</h3>
+                   <Dialog open={isNutritionistDialogOpen} onOpenChange={setIsNutritionistDialogOpen}>
+                      <DialogTrigger asChild>
+                         <Button onClick={() => { setEditingNutritionistId(null); setNewNutritionistName(""); setNewNutritionistUsername(""); setNewNutritionistPassword(""); setNewNutritionistPhone(""); }} className="bg-orange-500 hover:bg-orange-600 text-white">
+                            <Plus className="w-4 h-4 mr-2" /> 새 영양사 등록
+                         </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                         <DialogHeader>
+                            <DialogTitle>{editingNutritionistId ? "영양사 수정" : "새 영양사 등록"}</DialogTitle>
+                         </DialogHeader>
+                         <div className="space-y-4">
+                            <div>
+                               <label className="block text-sm font-medium text-gray-700 mb-2">이름</label>
+                               <Input 
+                                  placeholder="예: 홍영양"
+                                  value={newNutritionistName}
+                                  onChange={(e) => setNewNutritionistName(e.target.value)}
+                               />
+                            </div>
+                            <div>
+                               <label className="block text-sm font-medium text-gray-700 mb-2">아이디</label>
+                               <Input 
+                                  placeholder="예: nutritionist"
+                                  value={newNutritionistUsername}
+                                  onChange={(e) => setNewNutritionistUsername(e.target.value)}
+                               />
+                            </div>
+                            <div>
+                               <label className="block text-sm font-medium text-gray-700 mb-2">비밀번호</label>
+                               <Input 
+                                  type="password"
+                                  placeholder="비밀번호를 입력해주세요"
+                                  value={newNutritionistPassword}
+                                  onChange={(e) => setNewNutritionistPassword(e.target.value)}
+                               />
+                            </div>
+                            <div>
+                               <label className="block text-sm font-medium text-gray-700 mb-2">전화번호 (선택)</label>
+                               <Input 
+                                  placeholder="010-1234-5678"
+                                  value={newNutritionistPhone}
+                                  onChange={(e) => setNewNutritionistPhone(e.target.value)}
+                               />
+                            </div>
+                         </div>
+                         <DialogFooter>
+                            <Button onClick={handleSaveNutritionist} className="bg-orange-500 hover:bg-orange-600 text-white">
+                               {editingNutritionistId ? "수정 완료" : "등록"}
+                            </Button>
+                         </DialogFooter>
+                      </DialogContent>
+                   </Dialog>
+                </div>
+
+                <Table>
+                   <TableHeader>
+                      <TableRow>
+                         <TableHead>이름</TableHead>
+                         <TableHead>아이디</TableHead>
+                         <TableHead>전화번호</TableHead>
+                         <TableHead>상태</TableHead>
+                         <TableHead className="text-right">관리</TableHead>
+                      </TableRow>
+                   </TableHeader>
+                   <TableBody>
+                      {users.filter(u => u.role === 'nutritionist').map((nutritionist) => (
+                         <TableRow key={nutritionist.id}>
+                            <TableCell className="font-medium">{nutritionist.name}</TableCell>
+                            <TableCell>{nutritionist.username}</TableCell>
+                            <TableCell>{nutritionist.phone || '-'}</TableCell>
+                            <TableCell>
+                               {nutritionist.approved ? (
+                                  <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-200">승인됨</Badge>
+                               ) : (
+                                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200">대기중</Badge>
+                               )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                               <Button size="icon" variant="ghost" onClick={() => handleEditNutritionist(nutritionist)} className="text-blue-500 hover:text-blue-600 hover:bg-blue-50">
+                                  <Edit className="w-4 h-4" />
+                               </Button>
+                               <Button size="icon" variant="ghost" onClick={() => handleDeleteNutritionist(nutritionist.id)} className="text-red-500 hover:text-red-600 hover:bg-red-50">
+                                  <Trash2 className="w-4 h-4" />
+                               </Button>
+                            </TableCell>
+                         </TableRow>
+                      ))}
+                   </TableBody>
+                </Table>
+                {users.filter(u => u.role === 'nutritionist').length === 0 && (
+                   <div className="text-center py-12 text-gray-400">
+                      등록된 영양사가 없습니다.
+                   </div>
+                )}
              </div>
           )}
 
@@ -1032,7 +1252,20 @@ export default function Admin() {
                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white">
                             <p className="font-bold">{photo.title}</p>
                             <p className="text-xs mb-2">{photo.classId ? classes.find(c => c.id === photo.classId)?.name : '전체'}</p>
-                            <Button size="sm" variant="destructive" onClick={() => { if(confirm('삭제하시겠습니까?')) deleteAlbumPhoto(photo.id) }}>
+                            <Button size="sm" variant="destructive" onClick={async () => { 
+                              if(confirm('삭제하시겠습니까?')) {
+                                try {
+                                  await deleteAlbumPhoto(photo.id);
+                                  toast({ description: "사진이 삭제되었습니다." });
+                                } catch (error: any) {
+                                  toast({ 
+                                    variant: "destructive", 
+                                    title: "삭제 실패", 
+                                    description: error.message || "서버에서 삭제하지 못했습니다." 
+                                  });
+                                }
+                              }
+                            }}>
                                <Trash2 className="w-4 h-4" /> 삭제
                             </Button>
                          </div>
@@ -1051,7 +1284,7 @@ export default function Admin() {
                      <Input
                        placeholder="인사말 제목"
                        value={siteSettings.greetingTitle}
-                       onChange={(e) => updateSiteSettings({ ...siteSettings, greetingTitle: e.target.value })}
+                       onChange={(e) => { updateSiteSettings({ ...siteSettings, greetingTitle: e.target.value }); }}
                        className="bg-gray-50"
                      />
                      <Input
@@ -1063,7 +1296,7 @@ export default function Admin() {
                   </div>
                   <Textarea
                      value={siteSettings.greetingMessage}
-                     onChange={(e) => updateSiteSettings({ ...siteSettings, greetingMessage: e.target.value })}
+                     onChange={(e) => { updateSiteSettings({ ...siteSettings, greetingMessage: e.target.value }); }}
                      className="bg-gray-50"
                      placeholder="원장 인사말을 입력하세요."
                   />
@@ -1082,8 +1315,8 @@ export default function Admin() {
                    <div className="text-right">
                       <Button
                          className="bg-orange-500 hover:bg-orange-600 text-white"
-                         onClick={() => {
-                            updateSiteSettings({
+                         onClick={async () => {
+                            await updateSiteSettings({
                               ...siteSettings,
                               aboutDescription,
                               history: historyItems,
@@ -1095,7 +1328,7 @@ export default function Admin() {
                               phone: locPhone,
                               mapLink: locMap,
                             });
-                            toast({ title: "소개 글이 저장되었습니다." });
+                            toast({ title: "소개 글이 저장되었습니다.", description: "변경사항이 저장되었습니다." });
                          }}
                       >
                          저장
@@ -1151,8 +1384,8 @@ export default function Admin() {
                    <div className="text-right">
                       <Button
                          className="bg-orange-500 hover:bg-orange-600 text-white"
-                         onClick={() => {
-                            updateSiteSettings({
+                         onClick={async () => {
+                            await updateSiteSettings({
                               ...siteSettings,
                               aboutDescription,
                               history: historyItems,
@@ -1164,7 +1397,7 @@ export default function Admin() {
                               phone: locPhone,
                               mapLink: locMap,
                             });
-                            toast({ title: "연혁이 저장되었습니다." });
+                            toast({ title: "연혁이 저장되었습니다.", description: "변경사항이 저장되었습니다." });
                          }}
                       >
                          연혁 저장
@@ -1222,7 +1455,7 @@ export default function Admin() {
                               phone: locPhone,
                               mapLink: locMap,
                             });
-                            toast({ title: "교육철학이 저장되었습니다." });
+                            toast({ title: "교육철학이 저장되었습니다.", description: "변경사항이 저장되었습니다." });
                          }}
                       >
                          교육철학 저장
@@ -1291,7 +1524,7 @@ export default function Admin() {
                               phone: locPhone,
                               mapLink: locMap,
                             });
-                            toast({ title: "시설 안내가 저장되었습니다." });
+                            toast({ title: "시설 안내가 저장되었습니다.", description: "변경사항이 저장되었습니다." });
                          }}
                       >
                          시설 안내 저장
@@ -1321,7 +1554,7 @@ export default function Admin() {
                               phone: locPhone,
                               mapLink: locMap,
                             });
-                            toast({ title: "오시는 길 정보가 저장되었습니다." });
+                            toast({ title: "오시는 길 정보가 저장되었습니다.", description: "변경사항이 저장되었습니다." });
                          }}
                       >
                          오시는 길 저장
@@ -1363,7 +1596,7 @@ export default function Admin() {
                          <label className="block text-sm font-medium text-gray-600 mb-2">연락처 수정</label>
                          <div className="flex gap-2">
                             <Input value={adminPhone} onChange={(e) => setAdminPhone(e.target.value)} className="bg-gray-50" />
-                            <Button onClick={() => { updateUserProfile({ phone: adminPhone }); toast({ title: '연락처 저장 완료' }); }} className="bg-orange-500 hover:bg-orange-600 text-white">저장</Button>
+                            <Button onClick={() => { updateUserProfile({ phone: adminPhone }); toast({ title: '연락처 저장 완료', description: "변경사항이 저장되었습니다." }); }} className="bg-orange-500 hover:bg-orange-600 text-white">저장</Button>
                          </div>
                       </div>
                    </div>

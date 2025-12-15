@@ -32,7 +32,14 @@ export default function ClassPage() {
 
         <div className="container mx-auto px-4 pb-20">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {classes.map((cls) => (
+            {classes
+              .sort((a, b) => {
+                // 나이를 숫자로 변환하여 정렬 (예: "2세" -> 2, "3세" -> 3)
+                const ageA = parseInt(a.age) || 0;
+                const ageB = parseInt(b.age) || 0;
+                return ageA - ageB;
+              })
+              .map((cls) => (
               <Link key={cls.id} href={`/classes/${cls.id}`} className="block">
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:border-orange-200 transition-all cursor-pointer h-full">
                   <div className={cn("w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-white shadow-md", cls.color.split(' ')[1])}>

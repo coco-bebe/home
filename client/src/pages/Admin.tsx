@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Users, Bell, Image, LogOut, Plus, Trash2, CheckCircle, XCircle, Save, Upload, Home as HomeIcon, Edit, Baby, Lock, UtensilsCrossed } from "lucide-react";
+import { Users, Bell, Image, LogOut, Plus, Trash2, CheckCircle, XCircle, Save, Upload, Home as HomeIcon, Edit, Baby, Lock, UtensilsCrossed, Menu } from "lucide-react";
 import { cn, convertGoogleDriveUrl } from "@/lib/utils";
 import { GoogleDriveImage } from "@/components/ui/GoogleDriveImage";
 import { useState, useEffect } from "react";
@@ -12,9 +12,11 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { 
      logout, 
      users, updateUserStatus, deleteUser, registerUser,
@@ -461,79 +463,105 @@ export default function Admin() {
       toast({ title: '프로필이 저장되었습니다.', description: "변경사항이 저장되었습니다." });
    };
 
-  return (
-    <div className="min-h-screen bg-gray-50 font-sans flex">
-       {/* Sidebar */}
-       <div className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col sticky top-0 h-screen">
-          <div className="p-6 border-b border-gray-100">
-             <h2 className="font-display text-xl font-bold text-orange-600">관리자 페이지</h2>
-             <p className="text-xs text-gray-400">코코베베어린이집</p>
-          </div>
-          
-          <nav className="flex-1 p-4 space-y-2">
-             {[
-                { id: "dashboard", label: "대시보드", icon: Users },
-                { id: "members", label: "회원 관리", icon: Users },
-                { id: "children", label: "아이 관리", icon: Baby },
-                { id: "classes", label: "반 관리", icon: Users },
-                { id: "teachers", label: "선생님 관리", icon: Users },
-                { id: "nutritionists", label: "영양사 관리", icon: UtensilsCrossed },
-                { id: "board", label: "게시판 관리", icon: Bell },
-                { id: "album", label: "앨범 관리", icon: Image },
-                { id: "about", label: "소개 관리", icon: Bell },
-                { id: "account", label: "계정 설정", icon: Lock },
-             ].map((item) => (
-                <button
-                   key={item.id}
-                   onClick={() => setActiveTab(item.id)}
-                   className={cn(
-                      "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
-                      activeTab === item.id 
-                         ? "bg-orange-50 text-orange-600" 
-                         : "text-gray-600 hover:bg-gray-50"
-                   )}
-                >
-                   <item.icon className="w-5 h-5" />
-                   {item.label}
-                </button>
-             ))}
-          </nav>
+  const menuItems = [
+    { id: "dashboard", label: "대시보드", icon: Users },
+    { id: "members", label: "회원 관리", icon: Users },
+    { id: "children", label: "아이 관리", icon: Baby },
+    { id: "classes", label: "반 관리", icon: Users },
+    { id: "teachers", label: "선생님 관리", icon: Users },
+    { id: "nutritionists", label: "영양사 관리", icon: UtensilsCrossed },
+    { id: "board", label: "게시판 관리", icon: Bell },
+    { id: "album", label: "앨범 관리", icon: Image },
+    { id: "about", label: "소개 관리", icon: Bell },
+    { id: "account", label: "계정 설정", icon: Lock },
+  ];
 
-          <div className="p-4 border-t border-gray-100 space-y-2">
-             <Link href="/">
-                <a className="flex items-center gap-2 text-gray-600 hover:bg-gray-50 transition-colors px-4 py-2 rounded-lg">
-                   <HomeIcon className="w-4 h-4" />
-                   <span className="text-sm font-medium">홈페이지로 이동</span>
-                </a>
-             </Link>
-             <button 
-                onClick={() => { logout(); setLocation("/"); }}
-                className="w-full flex items-center gap-2 text-gray-500 hover:text-red-500 transition-colors px-4 py-2"
-             >
-                <LogOut className="w-4 h-4" />
-                <span className="text-sm font-medium">로그아웃</span>
-             </button>
-          </div>
+  const SidebarContent = ({ onItemClick }: { onItemClick?: () => void }) => (
+    <div className="h-full flex flex-col min-h-0">
+      <div className="p-6 border-b border-gray-100 flex-shrink-0">
+        <h2 className="font-display text-xl font-bold text-orange-600">관리자 페이지</h2>
+        <p className="text-xs text-gray-400">코코베베어린이집</p>
+      </div>
+      
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto min-h-0">
+        {menuItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => {
+              setActiveTab(item.id);
+              onItemClick?.();
+            }}
+            className={cn(
+              "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
+              activeTab === item.id 
+                ? "bg-orange-50 text-orange-600" 
+                : "text-gray-600 hover:bg-gray-50"
+            )}
+          >
+            <item.icon className="w-5 h-5" />
+            {item.label}
+          </button>
+        ))}
+      </nav>
+
+      <div className="p-4 border-t border-gray-100 space-y-2 flex-shrink-0 bg-white">
+        <Link href="/">
+          <a className="flex items-center gap-2 text-gray-600 hover:bg-gray-50 transition-colors px-4 py-2 rounded-lg">
+            <HomeIcon className="w-4 h-4" />
+            <span className="text-sm font-medium">홈페이지로 이동</span>
+          </a>
+        </Link>
+        <button 
+          onClick={() => { logout(); setLocation("/"); }}
+          className="w-full flex items-center gap-2 text-gray-500 hover:text-red-500 transition-colors px-4 py-2"
+        >
+          <LogOut className="w-4 h-4" />
+          <span className="text-sm font-medium">로그아웃</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50 font-sans flex flex-col md:flex-row">
+       {/* Desktop Sidebar */}
+       <div className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col sticky top-0 h-screen">
+          <SidebarContent />
        </div>
 
        {/* Main Content */}
-       <div className="flex-1 p-8 overflow-y-auto h-screen">
-          <header className="flex justify-between items-center mb-8">
-             <h1 className="text-2xl font-bold text-gray-800 font-display">
-                {activeTab === 'dashboard' && '대시보드'}
-                {activeTab === 'members' && '회원 관리'}
-                {activeTab === 'children' && '아이 관리'}
-                {activeTab === 'classes' && '반 관리'}
-                {activeTab === 'teachers' && '선생님 관리'}
-                {activeTab === 'nutritionists' && '영양사 관리'}
-                {activeTab === 'board' && '게시판 관리'}
-                {activeTab === 'album' && '앨범 관리'}
-               {activeTab === 'about' && '어린이집 소개 관리'}
-                {activeTab === 'account' && '계정 설정'}
-             </h1>
-             <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-500">관리자(Admin)님 환영합니다.</span>
-                <div className="w-10 h-10 rounded-full bg-gray-200" />
+       <div className="flex-1 p-4 md:p-8 overflow-y-auto min-h-screen">
+          <header className="flex justify-between items-center mb-6 md:mb-8 flex-wrap gap-4">
+             <div className="flex items-center gap-3">
+               <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                 <SheetTrigger asChild>
+                   <Button variant="ghost" size="icon" className="md:hidden">
+                     <Menu className="w-5 h-5" />
+                   </Button>
+                 </SheetTrigger>
+                 <SheetContent side="left" className="w-[280px] p-0 flex flex-col h-full overflow-hidden">
+                   <SheetHeader className="sr-only">
+                     <SheetTitle>메뉴</SheetTitle>
+                   </SheetHeader>
+                   <SidebarContent onItemClick={() => setIsMobileMenuOpen(false)} />
+                 </SheetContent>
+               </Sheet>
+               <h1 className="text-xl md:text-2xl font-bold text-gray-800 font-display">
+                  {activeTab === 'dashboard' && '대시보드'}
+                  {activeTab === 'members' && '회원 관리'}
+                  {activeTab === 'children' && '아이 관리'}
+                  {activeTab === 'classes' && '반 관리'}
+                  {activeTab === 'teachers' && '선생님 관리'}
+                  {activeTab === 'nutritionists' && '영양사 관리'}
+                  {activeTab === 'board' && '게시판 관리'}
+                  {activeTab === 'album' && '앨범 관리'}
+                  {activeTab === 'about' && '어린이집 소개 관리'}
+                  {activeTab === 'account' && '계정 설정'}
+               </h1>
+             </div>
+             <div className="flex items-center gap-2 md:gap-4">
+                <span className="text-xs md:text-sm text-gray-500 hidden sm:inline">관리자(Admin)님 환영합니다.</span>
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gray-200" />
              </div>
           </header>
 
@@ -557,8 +585,9 @@ export default function Admin() {
 
           {/* Members Management */}
           {activeTab === 'members' && (
-             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <Table>
+             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6">
+                <div className="overflow-x-auto">
+                  <Table>
                    <TableHeader>
                       <TableRow>
                          <TableHead>이름</TableHead>
@@ -612,13 +641,14 @@ export default function Admin() {
                    </TableBody>
                 </Table>
              </div>
+             </div>
           )}
 
           {/* Children Management */}
           {activeTab === 'children' && (
-             <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                   <h3 className="text-lg font-bold text-gray-800">등록된 아이 목록</h3>
+             <div className="space-y-4 md:space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                   <h3 className="text-base md:text-lg font-bold text-gray-800">등록된 아이 목록</h3>
                    <Dialog open={isChildDialogOpen} onOpenChange={setIsChildDialogOpen}>
                       <DialogTrigger asChild>
                          <Button className="bg-orange-500 hover:bg-orange-600 text-white">
@@ -658,8 +688,9 @@ export default function Admin() {
                    </Dialog>
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                   <Table>
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6">
+                   <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
+                     <Table>
                       <TableHeader>
                          <TableRow>
                             <TableHead>이름</TableHead>
@@ -713,16 +744,17 @@ export default function Admin() {
                             </TableRow>
                          )}
                       </TableBody>
-                   </Table>
+                     </Table>
+                   </div>
                 </div>
              </div>
           )}
 
           {/* Classes Management */}
           {activeTab === 'classes' && (
-             <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                   <h3 className="text-lg font-bold text-gray-800">반 관리</h3>
+             <div className="space-y-4 md:space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                   <h3 className="text-base md:text-lg font-bold text-gray-800">반 관리</h3>
                    <Dialog open={isClassDialogOpen} onOpenChange={setIsClassDialogOpen}>
                       <DialogTrigger asChild>
                          <Button className="bg-orange-500 hover:bg-orange-600 text-white">
@@ -740,7 +772,7 @@ export default function Admin() {
                             </div>
                             <div>
                                <label className="text-sm font-medium mb-1 block">연령</label>
-                               <Input placeholder="예: 3세" value={newClassAge} onChange={e => setNewClassAge(e.target.value)} />
+                               <Input placeholder="예: 1세" value={newClassAge} onChange={e => setNewClassAge(e.target.value)} />
                             </div>
                             <div>
                                <label className="text-sm font-medium mb-1 block">담당 선생님</label>
@@ -777,8 +809,9 @@ export default function Admin() {
                    </Dialog>
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                   <Table>
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6">
+                   <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
+                     <Table>
                       <TableHeader>
                          <TableRow>
                             <TableHead>이름</TableHead>
@@ -825,16 +858,17 @@ export default function Admin() {
                             </TableRow>
                          ))}
                       </TableBody>
-                   </Table>
+                     </Table>
+                   </div>
                 </div>
              </div>
           )}
 
           {/* Teachers Management */}
           {activeTab === 'teachers' && (
-             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
-                <div className="flex justify-between items-center">
-                   <h3 className="text-lg font-bold text-gray-800">선생님 목록</h3>
+             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6 space-y-4 md:space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                   <h3 className="text-base md:text-lg font-bold text-gray-800">선생님 목록</h3>
                    <Dialog open={isTeacherDialogOpen} onOpenChange={setIsTeacherDialogOpen}>
                       <DialogTrigger asChild>
                          <Button onClick={() => { setEditingTeacherId(null); setNewTeacherName(""); setNewTeacherUsername(""); setNewTeacherPassword(""); setNewTeacherPhone(""); setNewTeacherClassId(""); }} className="bg-orange-500 hover:bg-orange-600 text-white">
@@ -849,7 +883,7 @@ export default function Admin() {
                             <div>
                                <label className="block text-sm font-medium text-gray-700 mb-2">이름</label>
                                <Input 
-                                  placeholder="예: 김미소"
+                                  placeholder="예: 윤해란"
                                   value={newTeacherName}
                                   onChange={(e) => setNewTeacherName(e.target.value)}
                                />
@@ -1047,7 +1081,7 @@ export default function Admin() {
                             <Plus className="w-4 h-4 mr-2" /> 글쓰기
                          </Button>
                       </DialogTrigger>
-                      <DialogContent className="max-w-2xl">
+                      <DialogContent className="max-w-[95vw] md:max-w-2xl max-h-[90vh] overflow-y-auto">
                          <DialogHeader>
                             <DialogTitle>{editingPostId ? "게시글 수정" : "새 게시글 작성"}</DialogTitle>
                          </DialogHeader>
@@ -1130,8 +1164,9 @@ export default function Admin() {
                    </Dialog>
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                   <Table>
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6">
+                   <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
+                     <Table>
                       <TableHeader>
                          <TableRow>
                             <TableHead>분류</TableHead>
@@ -1180,7 +1215,8 @@ export default function Admin() {
                             </TableRow>
                          ))}
                       </TableBody>
-                   </Table>
+                     </Table>
+                   </div>
                 </div>
              </div>
           )}
@@ -1196,7 +1232,7 @@ export default function Admin() {
                             <Upload className="w-4 h-4 mr-2" /> 사진 업로드
                          </Button>
                       </DialogTrigger>
-                      <DialogContent className="max-w-2xl">
+                      <DialogContent className="max-w-[95vw] md:max-w-2xl max-h-[90vh] overflow-y-auto">
                          <DialogHeader>
                             <DialogTitle>사진 업로드</DialogTitle>
                          </DialogHeader>
@@ -1568,7 +1604,7 @@ export default function Admin() {
           {activeTab === 'account' && (
              <div className="space-y-6 max-w-3xl">
                 {/* Admin Information Card */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
                    <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                       👤 관리자 정보
                    </h2>
@@ -1607,7 +1643,7 @@ export default function Admin() {
                       <DialogTrigger asChild>
                             <Button className="bg-white border border-gray-200 text-gray-800">정보 수정</Button>
                          </DialogTrigger>
-                      <DialogContent className="max-w-md">
+                      <DialogContent className="max-w-[95vw] md:max-w-md max-h-[90vh] overflow-y-auto">
                          <DialogHeader>
                             <DialogTitle>관리자 정보 수정</DialogTitle>
                          </DialogHeader>
@@ -1634,7 +1670,7 @@ export default function Admin() {
                             <Lock className="w-4 h-4" /> 비밀번호 변경
                          </Button>
                       </DialogTrigger>
-                      <DialogContent className="max-w-md">
+                      <DialogContent className="max-w-[95vw] md:max-w-md max-h-[90vh] overflow-y-auto">
                          <DialogHeader>
                             <DialogTitle>비밀번호 변경</DialogTitle>
                          </DialogHeader>

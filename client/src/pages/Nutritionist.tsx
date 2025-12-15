@@ -121,17 +121,17 @@ export default function Nutritionist() {
       <div className="flex-1 p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           {/* 헤더 */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-3">
-                  <UtensilsCrossed className="w-8 h-8 text-orange-500" />
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6 mb-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+              <div className="flex-1">
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2 flex items-center gap-2 md:gap-3">
+                  <UtensilsCrossed className="w-6 h-6 md:w-8 md:h-8 text-orange-500" />
                   영양사 대시보드
                 </h1>
-                <p className="text-gray-600">
+                <p className="text-sm md:text-base text-gray-600">
                   <span className="font-bold">{currentUser.name}</span> 선생님의 식단표 관리
                 </p>
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-xs md:text-sm text-gray-500 mt-2">
                   📋 등록된 식단표: {menuPosts.length}개
                 </p>
               </div>
@@ -142,7 +142,8 @@ export default function Nutritionist() {
                   toast({ description: "로그아웃되었습니다." });
                 }}
                 variant="outline"
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
+                size="sm"
               >
                 <LogOut className="w-4 h-4" /> 로그아웃
               </Button>
@@ -150,10 +151,10 @@ export default function Nutritionist() {
           </div>
 
           {/* 탭 네비게이션 - 식단표 관리 탭은 숨김, 대시보드만 표시 */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6 sticky top-20 z-40">
-            <div className="flex gap-2 flex-wrap overflow-x-auto">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 md:p-4 mb-6 sticky top-20 z-40">
+            <div className="flex gap-2 flex-wrap overflow-x-auto -mx-1 px-1">
               <button
-                className="px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap bg-orange-500 text-white"
+                className="px-3 md:px-4 py-2 rounded-lg text-sm md:text-base font-medium transition-colors whitespace-nowrap bg-orange-500 text-white"
               >
                 📊 대시보드
               </button>
@@ -293,7 +294,7 @@ export default function Nutritionist() {
                       <Plus className="w-4 h-4" /> 식단표 등록
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl">
+                  <DialogContent className="max-w-[95vw] md:max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>{editingPostId ? "식단표 수정" : "식단표 등록"}</DialogTitle>
                     </DialogHeader>

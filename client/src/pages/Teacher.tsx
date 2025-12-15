@@ -24,6 +24,11 @@ export default function Teacher() {
   const myClassData = classes.find(c => c.id === teacherClassId);
   const classStudents = registeredChildren.filter(child => child.classId === teacherClassId);
 
+  console.log('Teacher page - currentUser:', currentUser);
+  console.log('Teacher page - teacherClassId:', teacherClassId);
+  console.log('Teacher page - myClassData:', myClassData);
+  console.log('Teacher page - classes:', classes);
+
   // 상태 관리
   const [activeTab, setActiveTab] = useState("overview");
   const [editingPostId, setEditingPostId] = useState<number | null>(null);
@@ -126,17 +131,17 @@ export default function Teacher() {
     };
 
     try {
-      if (editingPostId) {
+    if (editingPostId) {
         await updatePost(editingPostId, postData);
         toast({ title: "공지사항 수정 완료", description: "변경사항이 저장되었습니다." });
-      } else {
+    } else {
         await addPost(postData);
         toast({ title: "공지사항 작성 완료", description: "공지사항이 저장되었습니다." });
-      }
-      setIsPostDialogOpen(false);
-      setEditingPostId(null);
-      setNewPostTitle("");
-      setNewPostContent("");
+    }
+    setIsPostDialogOpen(false);
+    setEditingPostId(null);
+    setNewPostTitle("");
+    setNewPostContent("");
       setNewPostParentId("all");
     } catch (error: any) {
       toast({ 
@@ -159,7 +164,7 @@ export default function Teacher() {
     if (confirm("정말 삭제하시겠습니까?")) {
       try {
         await deletePost(postId);
-        toast({ description: "공지사항이 삭제되었습니다." });
+      toast({ description: "공지사항이 삭제되었습니다." });
       } catch (error: any) {
         toast({ 
           variant: "destructive", 
@@ -189,16 +194,16 @@ export default function Teacher() {
 
     try {
       await addPost({
-        title: photoTitle,
-        content: `[활동사진] ${photoTitle}`,
-        type: 'album',
-        author: currentUser.name,
-        classId: teacherClassId,
-        images: [photoUrl]
-      });
-      setIsPhotoDialogOpen(false);
-      setPhotoTitle("");
-      setPhotoUrl("");
+      title: photoTitle,
+      content: `[활동사진] ${photoTitle}`,
+      type: 'album',
+      author: currentUser.name,
+      classId: teacherClassId,
+      images: [photoUrl]
+    });
+    setIsPhotoDialogOpen(false);
+    setPhotoTitle("");
+    setPhotoUrl("");
       toast({ title: "활동사진 등록 완료", description: "활동사진이 저장되었습니다." });
     } catch (error: any) {
       toast({ 
@@ -278,16 +283,16 @@ export default function Teacher() {
       <div className="flex-1 p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           {/* 헤더 */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6 mb-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+              <div className="flex-1">
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
                   {myClassData.name} 담임실
                 </h1>
-                <p className="text-gray-600">
+                <p className="text-sm md:text-base text-gray-600">
                   <span className="font-bold">{currentUser.name}</span> 선생님의 교실 관리 대시보드
                 </p>
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-xs md:text-sm text-gray-500 mt-2">
                   👶 담당 학생: {classStudents.length}명
                 </p>
               </div>
@@ -298,7 +303,8 @@ export default function Teacher() {
                   toast({ description: "로그아웃되었습니다." });
                 }}
                 variant="outline"
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
+                size="sm"
               >
                 <LogOut className="w-4 h-4" /> 로그아웃
               </Button>
@@ -306,8 +312,8 @@ export default function Teacher() {
           </div>
 
           {/* 탭 네비게이션 */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6 sticky top-20 z-40">
-            <div className="flex gap-2 flex-wrap overflow-x-auto">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 md:p-4 mb-6 sticky top-20 z-40">
+            <div className="flex gap-2 flex-wrap overflow-x-auto -mx-1 px-1">
               {[
                 { id: 'overview', label: '📊 대시보드', icon: '📊' },
                 { id: 'students', label: '👥 학생 관리', icon: '👥' },
@@ -320,7 +326,7 @@ export default function Teacher() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                  className={`px-3 md:px-4 py-2 rounded-lg text-sm md:text-base font-medium transition-colors whitespace-nowrap ${
                     activeTab === tab.id
                       ? 'bg-orange-500 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -356,14 +362,14 @@ export default function Teacher() {
 
           {/* 학생 관리 */}
           {activeTab === 'students' && (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6">
+              <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-4">
                 {myClassData.name} 학생 목록 ({classStudents.length}명)
               </h2>
               {classStudents.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">등록된 학생이 없습니다.</p>
               ) : (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -404,7 +410,7 @@ export default function Teacher() {
                       <Edit className="w-4 h-4" /> 편집
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl">
+                  <DialogContent className="max-w-[95vw] md:max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>일과표 관리</DialogTitle>
                     </DialogHeader>
@@ -479,7 +485,7 @@ export default function Teacher() {
                       <Upload className="w-4 h-4" /> 업로드/수정
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl">
+                  <DialogContent className="max-w-[95vw] md:max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>교육 계획안 업로드</DialogTitle>
                     </DialogHeader>
@@ -625,7 +631,7 @@ export default function Teacher() {
                       <Plus className="w-4 h-4" /> 공지사항 작성
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl">
+                  <DialogContent className="max-w-[95vw] md:max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>
                         {editingPostId ? "공지사항 수정" : "새 공지사항 작성"}
@@ -822,7 +828,7 @@ export default function Teacher() {
                       <DialogTrigger asChild>
                       <Button variant="outline" className="bg-white border border-gray-200 text-gray-800">정보 수정</Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-md">
+                    <DialogContent className="max-w-[95vw] md:max-w-md max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle>프로필 수정</DialogTitle>
                       </DialogHeader>

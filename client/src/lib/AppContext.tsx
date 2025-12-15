@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CLASSES as MOCK_CLASSES } from './mockData';
 
 // API base URL
-const API_BASE = import.meta.env.DEV ? 'http://localhost:5000/api' : '/api';
+const API_BASE = '/api';
 
 // Class Interface
 export interface ClassData {
@@ -132,10 +132,18 @@ const INITIAL_SETTINGS: SiteSettings = {
   mapLink: "https://map.naver.com/p/search/서울 강서구 양천로75길 57",
   aboutDescription: "아이들의 꿈이 자라는 따뜻한 둥지, 코코베베어린이집입니다. 안전한 환경과 아이 중심의 교육으로 하루하루 성장의 기쁨을 나눕니다.",
   history: [
-    { year: "2018", title: "코코베베어린이집 개원" },
-    { year: "2020", title: "실내 놀이실 리모델링" },
-    { year: "2022", title: "야외 텃밭 & 자연체험 프로그램 도입" },
-    { year: "2024", title: "급식실·안전 시스템 전면 업그레이드" },
+    { year: "2008", title: "코코베베어린이집 개원" },
+    { year: "2009", title: "여성가족부 주관 평가인증 통과" },
+    { year: "2010", title: "서울형어린이집 공인인증" },
+    { year: "2011", title: "모범교사상 수상" },
+    { year: "2013", title: "어린이집 2차 평가인증 통과(97점)" },
+    { year: "2016", title: "어린이집 3차 평가인증 통과(97.6점)" },
+    { year: "2019", title: "어린이집 이전(염창 현대1차APT 104동 102호)" },
+    { year: "2019", title: "어린이집 4차 평가인증 통과(A)" },
+    { year: "2019", title: "우수원장상 수상 [원장 박윤희]" },
+    { year: "2023", title: "어린이집 5차 평가인증 통과(A)" },
+    { year: "2023", title: "서울형어린이집 공인인증" },
+    { year: "2025", title: "강서구 우수어린이집 수상" },
   ],
   greetingTitle: "아이들의 꿈이 자라는 따뜻한 둥지, 코코베베에 오신 것을 환영합니다.",
   greetingMessage: "안녕하세요, 코코베베어린이집입니다. 안전한 환경, 균형 잡힌 식단, 아이 중심 교육으로 매일 성장의 기쁨을 나눕니다.",
@@ -150,49 +158,15 @@ const INITIAL_SETTINGS: SiteSettings = {
   facilityImages: [],
 };
 
-const MOCK_USERS: User[] = [
-  { id: '1', username: 'admin', password: '123', name: '관리자', role: 'admin', approved: true },
-  { 
-    id: '2', username: 'parent1', password: '123', name: '김철수', role: 'parent', approved: true, phone: '010-1111-2222',
-    child: { name: '김민준', age: 2, classId: 'faith1', birthDate: '2022-03-15' }
-  },
-  { 
-    id: '3', username: 'parent2', password: '123', name: '이영희', role: 'parent', approved: true, phone: '010-3333-4444',
-    child: { name: '이서연', age: 4, classId: 'love', birthDate: '2020-07-22' }
-  },
-  { 
-    id: '4', username: 'newparent', password: '123', name: '박신입', role: 'parent', approved: false, phone: '010-5555-6666',
-    child: { name: '박하늘', age: 3, classId: 'faith2', birthDate: '2021-11-08' }
-  },
-  { id: '5', username: 'nutritionist', password: '123', name: '영양사', role: 'nutritionist', approved: true, phone: '010-7777-8888' },
-];
-
-const MOCK_POSTS: Post[] = [
-  { id: 1, title: "[공지] 12월 겨울방학 안내", content: "겨울방학 기간은 12월 25일부터 1월 5일까지입니다. 가정통신문을 참고해주세요.", author: "원장님", date: "2024-12-01", type: "notice" },
-  { id: 2, title: "[행사] 크리스마스 산타 잔치", content: "아이들이 기다리던 산타 잔치가 열립니다! 빨간 옷을 입혀 보내주세요.", author: "관리자", date: "2024-11-28", type: "event" },
-  { id: 3, title: "12월 식단표", content: "균형 잡힌 영양 식단표입니다. 알레르기가 있는 어린이는 미리 말씀해주세요.", author: "영양사", date: "2024-12-01", type: "menu", images: ["https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&q=80"] },
-  { id: 4, title: "우리 아이들 소풍 사진", content: "가을 소풍을 다녀왔습니다. 해맑은 아이들의 모습을 감상해보세요.", author: "김미소 선생님", date: "2024-11-20", type: "board", classId: "faith1", images: ["https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&q=80"] },
-  { id: 5, title: "믿음1반 알림장", content: "오늘 민준이가 밥을 두 그릇이나 먹었어요. 낮잠도 푹 잤답니다.", author: "김미소 선생님", date: "2024-12-04", type: "board", classId: "faith1" },
-];
-
-const MOCK_ALBUM_PHOTOS: AlbumPhoto[] = [
-  { id: 1, url: "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&q=80", title: "가을 소풍", date: "2024-10-15" },
-  { id: 2, url: "https://images.unsplash.com/photo-1587654780291-39c940483719?auto=format&fit=crop&q=80", title: "요리 실습", date: "2024-11-02" },
-  { id: 3, url: "https://images.unsplash.com/photo-1566004100631-35d015d23a38?auto=format&fit=crop&q=80", title: "체육 대회", date: "2024-09-20" },
-  { id: 4, url: "https://images.unsplash.com/photo-1596968132113-a6a22bf42ea6?auto=format&fit=crop&q=80", title: "미술 시간", date: "2024-11-10" },
-];
-
-const MOCK_REGISTERED_CHILDREN: RegisteredChild[] = [
-  { id: '1', name: '김민준', birthDate: '2022-03-15', classId: 'faith1' },
-  { id: '2', name: '이서연', birthDate: '2020-07-22', classId: 'love' },
-  { id: '3', name: '박하늘', birthDate: '2021-11-08', classId: 'faith2' },
-];
-
-const MOCK_TEACHERS: Teacher[] = [
-  { id: '1', name: '김미소', username: 'teacher1', password: '123', phone: '010-1111-1111', classId: 'faith1', approved: true },
-  { id: '2', name: '이사랑', username: 'teacher2', password: '123', phone: '010-2222-2222', classId: 'faith2', approved: true },
-  { id: '3', name: '박다정', username: 'teacher3', password: '123', phone: '010-3333-3333', classId: 'love', approved: true },
-];
+// Admin user is always available for login
+const DEFAULT_ADMIN_USER: User = {
+  id: '1',
+  username: 'admin',
+  password: '123',
+  name: '관리자',
+  role: 'admin',
+  approved: true
+};
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -227,55 +201,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (postsRes?.ok) {
           const postsData = await postsRes.json();
           setPosts(postsData);
-        } else if (postsRes === null) {
-          // 서버가 실행되지 않은 경우에만 MOCK 데이터 사용
-          console.warn('서버에 연결할 수 없습니다. MOCK 데이터를 사용합니다.');
-          setPosts(MOCK_POSTS);
         }
-        // 서버 응답이 실패한 경우 기존 상태 유지 (빈 배열)
 
         if (photosRes?.ok) {
           const photosData = await photosRes.json();
           setAlbumPhotos(photosData);
-        } else if (photosRes === null) {
-          console.warn('서버에 연결할 수 없습니다. MOCK 데이터를 사용합니다.');
-          setAlbumPhotos(MOCK_ALBUM_PHOTOS);
         }
 
         if (usersRes?.ok) {
           const usersData = await usersRes.json();
           const hasAdmin = usersData.some((u: User) => u.role === 'admin');
-          setUsers(hasAdmin ? usersData : [MOCK_USERS[0], ...usersData]);
-        } else if (usersRes === null) {
-          console.warn('서버에 연결할 수 없습니다. MOCK 데이터를 사용합니다.');
-          setUsers(MOCK_USERS);
+          setUsers(hasAdmin ? usersData : [DEFAULT_ADMIN_USER, ...usersData]);
         }
 
         if (teachersRes?.ok) {
           const teachersData = await teachersRes.json();
           setTeachers(teachersData);
-        } else if (teachersRes === null) {
-          console.warn('서버에 연결할 수 없습니다. MOCK 데이터를 사용합니다.');
-          setTeachers(MOCK_TEACHERS);
         }
 
         if (classesRes?.ok) {
           const classesData = await classesRes.json();
-          // 서버에서 빈 배열이 와도 그대로 사용 (MOCK으로 대체하지 않음)
           setClasses(classesData);
-        } else if (classesRes === null) {
-          // 서버가 실행되지 않은 경우에만 MOCK 데이터 사용
-          console.warn('서버에 연결할 수 없습니다. MOCK 데이터를 사용합니다.');
-          setClasses(MOCK_CLASSES);
         }
-        // 서버 응답이 실패한 경우 기존 상태 유지 (MOCK_CLASSES)
 
         if (childrenRes?.ok) {
           const childrenData = await childrenRes.json();
           setRegisteredChildren(childrenData);
-        } else if (childrenRes === null) {
-          console.warn('서버에 연결할 수 없습니다. MOCK 데이터를 사용합니다.');
-          setRegisteredChildren(MOCK_REGISTERED_CHILDREN);
         }
 
         if (settingsRes?.ok) {
@@ -284,12 +235,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('Failed to load data:', error);
-        // Fallback to mock data
-        setPosts(MOCK_POSTS);
-        setAlbumPhotos(MOCK_ALBUM_PHOTOS);
-        setUsers(MOCK_USERS);
-        setTeachers(MOCK_TEACHERS);
-        setRegisteredChildren(MOCK_REGISTERED_CHILDREN);
       } finally {
         setLoading(false);
       }
@@ -633,22 +578,74 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addAlbumPhoto = async (newPhoto: Omit<AlbumPhoto, 'id' | 'date'>): Promise<AlbumPhoto> => {
+    const startTime = Date.now();
     try {
-      const res = await fetch(`${API_BASE}/album-photos`, {
+      console.log('[Client] ========================================');
+      console.log('[Client] addAlbumPhoto START');
+      console.log('[Client] Input:', JSON.stringify(newPhoto, null, 2));
+      console.log('[Client] API_BASE:', API_BASE);
+      
+      const url = `${API_BASE}/album-photos`;
+      console.log('[Client] Full URL:', url);
+      
+      const requestOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newPhoto),
-      });
+      };
+      console.log('[Client] Request options:', JSON.stringify(requestOptions, null, 2));
+      
+      console.log('[Client] Sending fetch request...');
+      const res = await fetch(url, requestOptions);
+      
+      console.log('[Client] Response received');
+      console.log('[Client] - Status:', res.status);
+      console.log('[Client] - Status Text:', res.statusText);
+      console.log('[Client] - OK:', res.ok);
+      console.log('[Client] - Headers:', Object.fromEntries(res.headers.entries()));
+      
+      const responseText = await res.text();
+      console.log('[Client] Response body (raw):', responseText);
+      
       if (res.ok) {
-        const photo = await res.json();
-        setAlbumPhotos(prev => [photo, ...prev]);
-        return photo;
+        try {
+          const photo = JSON.parse(responseText);
+          console.log('[Client] Photo parsed successfully:', photo);
+          setAlbumPhotos(prev => [photo, ...prev]);
+          const duration = Date.now() - startTime;
+          console.log('[Client] Success in', duration, 'ms');
+          console.log('[Client] ========================================');
+          return photo;
+        } catch (parseError: any) {
+          console.error('[Client] Failed to parse response:', parseError);
+          throw new Error(`응답 파싱 실패: ${parseError.message}`);
+        }
       } else {
-        const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error(errorData.error || `Server error: ${res.status}`);
+        let errorData;
+        try {
+          errorData = JSON.parse(responseText);
+        } catch {
+          errorData = { error: responseText || `Server error: ${res.status}` };
+        }
+        console.error('[Client] Server error response:', errorData);
+        throw new Error(errorData.error || `서버 오류: ${res.status} ${res.statusText}`);
       }
-    } catch (error) {
-      console.error('Failed to add album photo:', error);
+    } catch (error: any) {
+      const duration = Date.now() - startTime;
+      console.error('[Client] ========================================');
+      console.error('[Client] ERROR in addAlbumPhoto after', duration, 'ms');
+      console.error('[Client] Error type:', error?.constructor?.name);
+      console.error('[Client] Error message:', error?.message);
+      console.error('[Client] Error name:', error?.name);
+      console.error('[Client] Error stack:', error?.stack);
+      
+      // Network errors
+      if (error?.message?.includes('Failed to fetch') || error?.name === 'TypeError') {
+        console.error('[Client] Network error detected - server may be down');
+        throw new Error('서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
+      }
+      
+      console.error('[Client] ========================================');
       throw error;
     }
   };
@@ -718,13 +715,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       });
       if (res.ok) {
         const createdChild = await res.json();
+        console.log('Created child:', createdChild);
         setRegisteredChildren([...registeredChildren, createdChild]);
+        console.log('Updated registeredChildren:', [...registeredChildren, createdChild]);
       }
     } catch (error) {
       console.error('Failed to add registered child:', error);
       // Fallback: add locally
       child = { ...child, id: Date.now().toString() };
-      setRegisteredChildren([...registeredChildren, child]);
+    setRegisteredChildren([...registeredChildren, child]);
     }
   };
 
@@ -774,11 +773,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Failed to add class:', error);
       // Fallback: add locally
-      const classData: ClassData = {
-        ...newClass,
-        id: Date.now().toString()
-      };
-      setClasses([...classes, classData]);
+    const classData: ClassData = {
+      ...newClass,
+      id: Date.now().toString()
+    };
+    setClasses([...classes, classData]);
     }
   };
 
@@ -854,11 +853,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Failed to add teacher:', error);
       // Fallback: add locally
-      const teacher: Teacher = {
-        ...newTeacher,
-        id: Date.now().toString()
-      };
-      setTeachers([...teachers, teacher]);
+    const teacher: Teacher = {
+      ...newTeacher,
+      id: Date.now().toString()
+    };
+    setTeachers([...teachers, teacher]);
     }
   };
 

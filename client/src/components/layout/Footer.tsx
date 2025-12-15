@@ -44,7 +44,9 @@ export function Footer() {
             <ul className="space-y-3 text-sm text-gray-600">
               <li className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-orange-500 shrink-0" />
-                <span className="font-medium text-gray-800">평일:</span> 08:30 ~ 18:00
+                <span className="font-medium text-gray-800">평일:</span> 07:30 ~ 19:30
+                <Clock className="w-4 h-4 text-orange-500 shrink-0" />
+                <span className="font-medium text-gray-800">야간연장:</span> 19:30 ~ 21:30
               </li>
               
               <li className="text-orange-600 text-xs mt-2">

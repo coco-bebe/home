@@ -43,7 +43,7 @@ export async function registerRoutes(
 
   app.put("/api/posts/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = req.params.id; // UUID string, no parseInt
       const post = await storage.updatePost(id, req.body);
       if (!post) {
         return res.status(404).json({ error: "Post not found" });
@@ -56,7 +56,7 @@ export async function registerRoutes(
 
   app.delete("/api/posts/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = req.params.id; // UUID string, no parseInt
       const success = await storage.deletePost(id);
       if (!success) {
         return res.status(404).json({ error: "Post not found" });
@@ -127,7 +127,7 @@ export async function registerRoutes(
 
   app.delete("/api/album-photos/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = req.params.id; // UUID string, no parseInt
       const success = await storage.deleteAlbumPhoto(id);
       if (!success) {
         return res.status(404).json({ error: "Photo not found" });

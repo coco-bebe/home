@@ -19,7 +19,7 @@ export type User = typeof users.$inferSelect;
 
 // Posts table
 export const posts = pgTable("posts", {
-  id: integer("id").primaryKey().notNull(),
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   title: text("title").notNull(),
   content: text("content").notNull(),
   author: text("author").notNull(),
@@ -32,7 +32,7 @@ export const posts = pgTable("posts", {
 
 // Album Photos table
 export const albumPhotos = pgTable("album_photos", {
-  id: integer("id").primaryKey().notNull(),
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   url: text("url").notNull(),
   title: text("title").notNull(),
   date: text("date").notNull(),

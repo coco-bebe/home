@@ -2,33 +2,15 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import pkg from "pg";
 const { Pool } = pkg;
 import * as schema from "../shared/schema.ts";
+import "dotenv/config";
 
 // Get database URL from environment variable
-// Format: postgresql://username:password@hostname:port/database
+// Neon PostgreSQL format: postgresql://username:password@host/database?sslmode=require&channel_binding=require
 const getDatabaseUrl = (): string => {
-  // Check if DATABASE_URL is set (for production/external)
-  if (process.env.DATABASE_URL) {
-    return process.env.DATABASE_URL;
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL environment variable is not set. Please configure Neon PostgreSQL connection.");
   }
-
-  // Otherwise, construct from individual environment variables
-  // Render.com PostgreSQL external URL format: hostname.region-postgres.render.com
-  let hostname = process.env.DB_HOST || "dpg-d4vo1ehr0fns739pgqe0-a.singapore-postgres.render.com";
-  
-  // If hostname doesn't contain a dot, it might be an internal hostname
-  // Try to construct external URL (common Render.com pattern)
-  if (!hostname.includes('.')) {
-    // Default to singapore region based on provided information
-    hostname = `${hostname}.singapore-postgres.render.com`;
-  }
-  
-  const port = process.env.DB_PORT || "5432";
-  const database = process.env.DB_NAME || "cocobebe_2s46";
-  const username = process.env.DB_USER || "cocobebe_2s46_user";
-  const password = process.env.DB_PASSWORD || "AhUhpJ0JSwNrcNcvMzlybL6iDYRxpgx4";
-
-  // Render.com requires SSL for external connections
-  return `postgresql://${username}:${password}@${hostname}:${port}/${database}?sslmode=require`;
+  return process.env.DATABASE_URL;
 };
 
 const connectionString = getDatabaseUrl();

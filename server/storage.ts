@@ -1,7 +1,7 @@
 import { type User, type InsertUser } from "../shared/schema.ts";
 import { db, isDbConnected, doTablesExist, getDbError } from "./db.ts";
 import { users, posts, albumPhotos, appUsers, teachers, classes, registeredChildren, siteSettings } from "../shared/schema.ts";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, desc } from "drizzle-orm";
 import { pool } from "./db.ts";
 
 // Data types matching client-side interfaces
@@ -94,12 +94,12 @@ export interface IStorage {
   // App data methods
   getPosts(): Promise<Post[]>;
   addPost(post: Omit<Post, 'id' | 'date'>): Promise<Post>;
-  updatePost(id: number, post: Partial<Post>): Promise<Post | null>;
-  deletePost(id: number): Promise<boolean>;
+  updatePost(id: string, post: Partial<Post>): Promise<Post | null>;
+  deletePost(id: string): Promise<boolean>;
   
   getAlbumPhotos(): Promise<AlbumPhoto[]>;
   addAlbumPhoto(photo: Omit<AlbumPhoto, 'id' | 'date'>): Promise<AlbumPhoto>;
-  deleteAlbumPhoto(id: number): Promise<boolean>;
+  deleteAlbumPhoto(id: string): Promise<boolean>;
   
   getAppUsers(): Promise<AppUser[]>;
   addAppUser(user: Omit<AppUser, 'id'>): Promise<AppUser>;
@@ -144,17 +144,17 @@ export class DbStorage implements IStorage {
   // Posts
   async getPosts(): Promise<Post[]> {
     try {
-      const result = await pool.query('SELECT * FROM posts ORDER BY id DESC');
-      return result.rows.map(row => ({
+      const result = await db.select().from(posts).orderBy(desc(posts.id));
+      return result.map(row => ({
         id: row.id,
         title: row.title,
         content: row.content,
         author: row.author,
         date: row.date,
         type: row.type as Post['type'],
-        classId: row.class_id || undefined,
-        parentId: row.parent_id || undefined,
-        images: row.images ? (typeof row.images === 'string' ? JSON.parse(row.images) : row.images) : undefined,
+        classId: row.classId || undefined,
+        parentId: row.parentId || undefined,
+        images: row.images || undefined,
       }));
     } catch (error: any) {
       console.error("[Storage] Error in getPosts:", error);
@@ -163,7 +163,6 @@ export class DbStorage implements IStorage {
   }
 
   async addPost(post: Omit<Post, 'id' | 'date'>): Promise<Post> {
-    const startTime = Date.now();
     try {
       console.log("[Storage] =========================================");
       console.log("[Storage] addPost START");
@@ -174,46 +173,37 @@ export class DbStorage implements IStorage {
         throw new Error("title, content, author, and type are required");
       }
       
-      console.log("[Storage] Step 1: Getting max ID...");
-      const maxIdResult = await pool.query('SELECT COALESCE(MAX(id), 0) as max_id FROM posts');
-      const newId = parseInt(maxIdResult.rows[0]?.max_id || '0') + 1;
-      console.log("[Storage] Next ID will be:", newId);
-      
       const date = new Date().toISOString().split('T')[0];
-      const classId = post.classId || null;
-      const parentId = post.parentId || null;
-      const images = post.images ? JSON.stringify(post.images) : null;
       
-      console.log("[Storage] Step 2: Executing INSERT...");
-      const insertResult = await pool.query(
-        'INSERT INTO posts (id, title, content, author, date, type, class_id, parent_id, images) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
-        [newId, post.title, post.content, post.author, date, post.type, classId, parentId, images]
-      );
+      const result = await db.insert(posts).values({
+        title: post.title,
+        content: post.content,
+        author: post.author,
+        date: date,
+        type: post.type,
+        classId: post.classId || null,
+        parentId: post.parentId || null,
+        images: post.images || null,
+      }).returning();
       
-      const inserted = insertResult.rows[0];
+      const inserted = result[0];
       console.log("[Storage] Post inserted successfully:", inserted.id);
+      console.log("[Storage] =========================================");
       
-      const result = {
+      return {
         id: inserted.id,
         title: inserted.title,
         content: inserted.content,
         author: inserted.author,
         date: inserted.date,
         type: inserted.type as Post['type'],
-        classId: inserted.class_id || undefined,
-        parentId: inserted.parent_id || undefined,
-        images: inserted.images ? (typeof inserted.images === 'string' ? JSON.parse(inserted.images) : inserted.images) : undefined,
+        classId: inserted.classId || undefined,
+        parentId: inserted.parentId || undefined,
+        images: inserted.images || undefined,
       };
-      
-      const duration = Date.now() - startTime;
-      console.log("[Storage] Success in", duration, "ms");
-      console.log("[Storage] =========================================");
-      
-      return result;
     } catch (error: any) {
-      const duration = Date.now() - startTime;
       console.error("[Storage] =========================================");
-      console.error("[Storage] ERROR in addPost after", duration, "ms");
+      console.error("[Storage] ERROR in addPost");
       console.error("[Storage] Error message:", error?.message);
       console.error("[Storage] Error code:", error?.code);
       console.error("[Storage] Error detail:", error?.detail);
@@ -260,7 +250,7 @@ export class DbStorage implements IStorage {
     };
   }
 
-  async deletePost(id: number): Promise<boolean> {
+  async deletePost(id: string): Promise<boolean> {
     const result = await db.delete(posts).where(eq(posts.id, id)).returning();
     return result.length > 0;
   }
@@ -268,13 +258,13 @@ export class DbStorage implements IStorage {
   // Album Photos
   async getAlbumPhotos(): Promise<AlbumPhoto[]> {
     try {
-      const result = await pool.query('SELECT * FROM album_photos ORDER BY id DESC');
-      return result.rows.map(row => ({
+      const result = await db.select().from(albumPhotos).orderBy(desc(albumPhotos.id));
+      return result.map(row => ({
         id: row.id,
         url: row.url,
         title: row.title,
         date: row.date,
-        classId: row.class_id || undefined,
+        classId: row.classId || undefined,
       }));
     } catch (error: any) {
       console.error("[Storage] Error in getAlbumPhotos:", error);
@@ -283,7 +273,6 @@ export class DbStorage implements IStorage {
   }
 
   async addAlbumPhoto(photo: Omit<AlbumPhoto, 'id' | 'date'>): Promise<AlbumPhoto> {
-    const startTime = Date.now();
     try {
       console.log("[Storage] =========================================");
       console.log("[Storage] addAlbumPhoto START");
@@ -294,58 +283,32 @@ export class DbStorage implements IStorage {
         throw new Error("title and url are required");
       }
       
-      console.log("[Storage] Step 1: Getting max ID...");
-      const maxIdResult = await pool.query('SELECT COALESCE(MAX(id), 0) as max_id FROM album_photos');
-      console.log("[Storage] Max ID result:", maxIdResult.rows);
-      const newId = parseInt(maxIdResult.rows[0]?.max_id || '0') + 1;
-      console.log("[Storage] Next ID will be:", newId);
-      
       const date = new Date().toISOString().split('T')[0];
-      const classId = photo.classId || null;
       
-      console.log("[Storage] Step 2: Preparing insert values...");
-      console.log("[Storage] - id:", newId);
-      console.log("[Storage] - url:", photo.url);
-      console.log("[Storage] - title:", photo.title);
-      console.log("[Storage] - date:", date);
-      console.log("[Storage] - classId:", classId);
+      const result = await db.insert(albumPhotos).values({
+        url: photo.url,
+        title: photo.title,
+        date: date,
+        classId: photo.classId || null,
+      }).returning();
       
-      console.log("[Storage] Step 3: Executing INSERT query...");
-      const insertResult = await pool.query(
-        'INSERT INTO album_photos (id, url, title, date, class_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [newId, photo.url, photo.title, date, classId]
-      );
+      const inserted = result[0];
+      console.log("[Storage] Photo inserted successfully:", inserted.id);
+      console.log("[Storage] =========================================");
       
-      console.log("[Storage] Insert result rows:", insertResult.rows.length);
-      const inserted = insertResult.rows[0];
-      console.log("[Storage] Inserted row:", JSON.stringify(inserted, null, 2));
-      
-      const result = {
+      return {
         id: inserted.id,
         url: inserted.url,
         title: inserted.title,
         date: inserted.date,
-        classId: inserted.class_id || undefined,
+        classId: inserted.classId || undefined,
       };
-      
-      const duration = Date.now() - startTime;
-      console.log("[Storage] Photo inserted successfully in", duration, "ms");
-      console.log("[Storage] Returning:", JSON.stringify(result, null, 2));
-      console.log("[Storage] =========================================");
-      
-      return result;
     } catch (error: any) {
-      const duration = Date.now() - startTime;
       console.error("[Storage] =========================================");
-      console.error("[Storage] ERROR in addAlbumPhoto after", duration, "ms");
-      console.error("[Storage] Error type:", error?.constructor?.name);
+      console.error("[Storage] ERROR in addAlbumPhoto");
       console.error("[Storage] Error message:", error?.message);
       console.error("[Storage] Error code:", error?.code);
       console.error("[Storage] Error detail:", error?.detail);
-      console.error("[Storage] Error hint:", error?.hint);
-      console.error("[Storage] Error position:", error?.position);
-      console.error("[Storage] Error stack:", error?.stack);
-      console.error("[Storage] Full error:", JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
       console.error("[Storage] =========================================");
       
       if (error.message?.includes("does not exist") || error.message?.includes("relation") || error.code === "42P01") {
@@ -359,7 +322,7 @@ export class DbStorage implements IStorage {
     }
   }
 
-  async deleteAlbumPhoto(id: number): Promise<boolean> {
+  async deleteAlbumPhoto(id: string): Promise<boolean> {
     const result = await db.delete(albumPhotos).where(eq(albumPhotos.id, id)).returning();
     return result.length > 0;
   }

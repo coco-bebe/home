@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { serveStatic } from "./static";
+import cors from "cors";
+import { registerRoutes } from "./routes.ts";
+import { serveStatic } from "./static.ts";
 import { createServer } from "http";
 
 const app = express();
@@ -22,6 +23,8 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
+app.use(cors());
+
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -34,6 +37,11 @@ export function log(message: string, source = "express") {
 }
 
 app.use((req, res, next) => {
+  // Log API requests for debugging
+  if (req.path?.startsWith("/api")) {
+    console.log(`[Express] ${req.method} ${req.path} - API request received`);
+  }
+  
   const start = Date.now();
   const path = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
@@ -68,6 +76,11 @@ app.use((req, res, next) => {
 
     res.status(status).json({ message });
     throw err;
+  });
+
+  // Test API route registration
+  app.get("/api/test", (_req, res) => {
+    res.json({ message: "API routes are working", timestamp: new Date().toISOString() });
   });
 
   // importantly only setup vite in development and after

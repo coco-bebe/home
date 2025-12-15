@@ -9,7 +9,6 @@ const allowlist = [
   "@neondatabase/serverless",
   "axios",
   "connect-pg-simple",
-  "cors",
   "date-fns",
   "drizzle-orm",
   "drizzle-zod",

@@ -1,7 +1,7 @@
 import { type Express } from "express";
 import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
-import viteConfig from "../vite.config";
+import viteConfig from "../vite.config.js";
 import fs from "fs";
 import path from "path";
 import { nanoid } from "nanoid";
@@ -34,10 +34,31 @@ export async function setupVite(server: Server, app: Express) {
     appType: "custom",
   });
 
-  app.use(vite.middlewares);
+  // Only use Vite middleware for non-API routes
+  // Wrap vite.middlewares to skip API routes
+  const originalMiddlewares = vite.middlewares;
+  const wrappedMiddlewares = (req: any, res: any, next: any) => {
+    // Skip API routes completely - let Express handle them
+    const path = req.path || req.url || '';
+    const originalUrl = req.originalUrl || '';
+    
+    if (path.startsWith("/api") || originalUrl.startsWith("/api")) {
+      console.log(`[Vite] Skipping API route: ${path}`);
+      return next();
+    }
+    
+    return originalMiddlewares(req, res, next);
+  };
+  
+  app.use(wrappedMiddlewares);
 
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
+
+    // Skip API routes - let them be handled by Express routes
+    if (url?.startsWith("/api") || req.path?.startsWith("/api")) {
+      return next();
+    }
 
     try {
       const clientTemplate = path.resolve(
